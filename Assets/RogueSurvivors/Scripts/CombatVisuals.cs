@@ -15,12 +15,7 @@ namespace RogueSurvivors
         }
         public static void Spear(Vector2 start, Vector2 end)
         {
-            var go = new GameObject("槍の突き"); var sprite = go.AddComponent<SpriteRenderer>();
-            sprite.sprite = Resources.Load<Sprite>("RogueSurvivors/Art/spear"); sprite.sortingLayerName = "Projectiles";
-            sprite.sharedMaterial = Resources.Load<GameObject>("RogueSurvivors/PlayerBullet").GetComponentInChildren<SpriteRenderer>().sharedMaterial;
-            go.transform.position = (start + end) * .5f;
-            go.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(end.y - start.y, end.x - start.x) * Mathf.Rad2Deg);
-            go.transform.localScale = new Vector3(Vector2.Distance(start, end), 1, 1); Object.Destroy(go, .18f);
+            WeaponSwingVisual.Create(7, start, end);
         }
     }
 }

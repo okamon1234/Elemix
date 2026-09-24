@@ -46,7 +46,7 @@ namespace RogueSurvivors
                 var stats = player.GetComponent<PlayerStats>();
                 UIFactory.SetBar(hp, player.Current / player.Maximum, 284);
                 UIFactory.SetBar(xp, (float)stats.Experience / stats.RequiredExperience, 284);
-                healthText.text = "HP　" + Mathf.CeilToInt(player.Current) + " / " + player.Maximum + (player.Shield > 0 ? "　盾 " + Mathf.CeilToInt(player.Shield) : "");
+                healthText.text = "HP　" + Mathf.CeilToInt(player.Current) + " / " + player.Maximum + (player.HasBarrier ? "　結晶◆1" : "") + (player.Shield > 0 ? "　盾 " + Mathf.CeilToInt(player.Shield) : "");
                 var recovery = player.GetComponent<BossRecovery>();
                 recoveryLabel.text = (stats.Regeneration > 0 ? "自動回復 " + stats.Regeneration.ToString("0.00") + "/秒（被弾後5秒休止）" : "") +
                     (gm.Mode == RunMode.Boss && recovery ? "\n" + recovery.Status : "");

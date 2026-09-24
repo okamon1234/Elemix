@@ -30,7 +30,7 @@ namespace RogueSurvivors
             var pool = new List<UpgradeOption>();
             foreach (var definition in WeaponCatalog.All) {
                 var weapon = WeaponCatalog.Get(stats, definition.Kind);
-                if (weapon && weapon.Level < 8 && stats.CanAcquire(weapon)) pool.Add(new UpgradeOption(definition.Kind, PhysicalEvolution.Name(weapon), definition.Description + PhysicalEvolution.Hint(definition.Id)));
+                if (weapon && weapon.Level < 8 && stats.CanAcquire(weapon)) pool.Add(new UpgradeOption(definition.Kind, PhysicalEvolution.Name(weapon) + " Lv." + weapon.Level + " → " + (weapon.Level+1), WeaponCatalog.UpgradeDescription(weapon) + PhysicalEvolution.Hint(definition.Id)));
             }
             pool.Add(new UpgradeOption(UpgradeKind.Power, "攻撃力アップ", "攻撃力を基礎値の20%分強化\nすべての武器に有効"));
             pool.Add(new UpgradeOption(UpgradeKind.Speed, "移動速度アップ", "移動速度＋0.4\n敵の群れから抜け出しやすくなる"));
@@ -42,9 +42,9 @@ namespace RogueSurvivors
             if (owned.Count > 0) { var option = owned[Random.Range(0, owned.Count)]; offered.Add(option); pool.Remove(option); }
             while (offered.Count < 3) {
                 float total = 0;
-                foreach (var option in pool) { var weapon = WeaponCatalog.Get(stats, option.Kind); total += weapon ? WeaponCatalog.OfferWeight(stats.CharacterId, weapon.Id) * (weapon.Level > 0 ? 1.35f : 1) : 1.5f; }
+                foreach (var option in pool) { var weapon = WeaponCatalog.Get(stats, option.Kind); total += weapon ? OfferWeight(weapon) : 1.5f; }
                 float roll = Random.value * total; int index = pool.Count - 1;
-                for (int i = 0; i < pool.Count; i++) { var weapon = WeaponCatalog.Get(stats, pool[i].Kind); roll -= weapon ? WeaponCatalog.OfferWeight(stats.CharacterId, weapon.Id) * (weapon.Level > 0 ? 1.35f : 1) : 1.5f; if (roll <= 0) { index = i; break; } }
+                for (int i = 0; i < pool.Count; i++) { var weapon = WeaponCatalog.Get(stats, pool[i].Kind); roll -= weapon ? OfferWeight(weapon) : 1.5f; if (roll <= 0) { index = i; break; } }
                 offered.Add(pool[index]); pool.RemoveAt(index);
             }
             GameManager.Instance.ChoosingUpgrade = true;
@@ -52,6 +52,7 @@ namespace RogueSurvivors
             HUDController.Instance.LevelUI.Show(offered, Choose, stats.Level);
             EffectsService.Instance?.Play("Level");
         }
+        float OfferWeight(WeaponBase weapon) => WeaponCatalog.OfferWeight(stats.CharacterId, weapon.Id) * (weapon.Level > 0 ? 1.35f : 1) * PhysicalEvolution.PartnerWeight(stats,weapon.Id);
         public void Choose(int index)
         {
             if (offered == null || index < 0 || index >= offered.Count || !GameManager.Instance.IsPlaying) return;

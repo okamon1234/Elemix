@@ -2,7 +2,7 @@ using UnityEngine;
 namespace RogueSurvivors
 {
     public enum BossKind { Golem, Spider, Dragon, Guardian }
-    public enum BossAttack { Charge, Shockwave, TripleCharge, CrossSlam, PoisonPools, WebFan, WebGrid, NeedleStorm, FireFan, WingRing, Spiral, LightningLanes, Roots, SeedRing, RootMaze, TwinRings }
+    public enum BossAttack { Charge, Shockwave, TripleCharge, CrossSlam, PoisonPools, WebFan, WebGrid, NeedleStorm, FireFan, WingRing, Spiral, LightningLanes, Roots, SeedRing, RootMaze, TwinRings, SeismicRing, HammerSweep, WebCage, VenomTrail, SweepingBreath, StormHunt, ThornSpiral, Harvest }
     public static class BossCatalog
     {
         public static readonly string[] Names = { "アイアンゴーレム", "大グモ", "ストームドラゴン", "森の守護者" };
@@ -28,9 +28,30 @@ namespace RogueSurvivors
         internal static BossKind? VerificationSelection;
         public static BossKind Choose() => VerificationSelection ?? (BossKind)(Selection < 0 ? Random.Range(0,4) : Selection);
         public static BossAttack Attack(BossKind kind, bool phaseTwo, int index) { var plan = Plans[(int)kind * 2 + (phaseTwo ? 1 : 0)]; return plan[Mathf.Abs(index) % plan.Length]; }
+        public static BossAttack Attack(BossKind kind,int phase,int index)
+        {
+            if(phase==1) return Attack(kind,false,index);
+            BossAttack[][] plans={
+                new[]{BossAttack.HammerSweep,BossAttack.TripleCharge,BossAttack.SeismicRing,BossAttack.CrossSlam},
+                new[]{BossAttack.WebCage,BossAttack.VenomTrail,BossAttack.NeedleStorm,BossAttack.PoisonPools},
+                new[]{BossAttack.SweepingBreath,BossAttack.StormHunt,BossAttack.FireFan,BossAttack.Spiral},
+                new[]{BossAttack.ThornSpiral,BossAttack.RootMaze,BossAttack.Harvest,BossAttack.Roots}
+            };
+            BossAttack[][] finals={
+                new[]{BossAttack.SeismicRing,BossAttack.HammerSweep,BossAttack.TripleCharge,BossAttack.CrossSlam,BossAttack.HammerSweep},
+                new[]{BossAttack.VenomTrail,BossAttack.WebCage,BossAttack.NeedleStorm,BossAttack.WebGrid,BossAttack.WebCage},
+                new[]{BossAttack.StormHunt,BossAttack.SweepingBreath,BossAttack.Spiral,BossAttack.LightningLanes,BossAttack.SweepingBreath},
+                new[]{BossAttack.Harvest,BossAttack.ThornSpiral,BossAttack.Roots,BossAttack.RootMaze,BossAttack.Harvest}
+            };
+            var plan=(phase>=3?finals:plans)[(int)kind]; return plan[Mathf.Abs(index)%plan.Length];
+        }
         public static string AttackName(BossAttack attack)
         {
             switch (attack) {
+                case BossAttack.SeismicRing:return "地震の衝撃環・切れ目へ"; case BossAttack.HammerSweep:return "ハンマーの大なぎ払い";
+                case BossAttack.WebCage:return "縮む蜘蛛の巣・出口へ"; case BossAttack.VenomTrail:return "連続毒針・その場から離れる";
+                case BossAttack.SweepingBreath:return "旋回ブレス・背後へ"; case BossAttack.StormHunt:return "連続落雷・立ち止まらない";
+                case BossAttack.ThornSpiral:return "回る根・根と同じ方向へ"; case BossAttack.Harvest:return "収穫の輪・中央へ";
                 case BossAttack.Charge: return "突進"; case BossAttack.TripleCharge: return "三連突進";
                 case BossAttack.Shockwave: return "衝撃波"; case BossAttack.CrossSlam: return "十字粉砕";
                 case BossAttack.PoisonPools: return "毒だまり"; case BossAttack.WebFan: return "糸の扇射";

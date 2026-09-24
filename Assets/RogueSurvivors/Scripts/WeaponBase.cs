@@ -15,10 +15,10 @@ namespace RogueSurvivors
         public void Upgrade()
         {
             var before = new HashSet<string>();
-            foreach (var weapon in GetComponents<WeaponBase>()) if (PhysicalEvolution.Active(weapon)) before.Add(weapon.Id);
+            foreach (var weapon in GetComponents<WeaponBase>()) if (PhysicalEvolution.Active(weapon) || ElementEvolution.Active(weapon)) before.Add(weapon.Id);
             SetLevel(level + 1);
-            foreach (var weapon in GetComponents<WeaponBase>()) if (PhysicalEvolution.Active(weapon) && !before.Contains(weapon.Id))
-                HUDController.Instance?.Toast("武器進化！　" + PhysicalEvolution.Name(weapon));
+            foreach (var weapon in GetComponents<WeaponBase>()) if ((PhysicalEvolution.Active(weapon) || ElementEvolution.Active(weapon)) && !before.Contains(weapon.Id))
+                HUDController.Instance?.Toast("武器進化！　" + (ElementEvolution.Active(weapon)?ElementEvolution.Name(weapon):PhysicalEvolution.Name(weapon)));
         }
         protected virtual void Update()
         {

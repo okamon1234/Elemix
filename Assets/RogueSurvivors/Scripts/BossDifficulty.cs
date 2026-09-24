@@ -14,7 +14,7 @@ namespace RogueSurvivors
                 total += player.Level; durability += player.MaxHealth;
                 foreach (var weapon in player.GetComponents<WeaponBase>()) {
                     if (weapon.Level == 0) continue;
-                    dps += WeaponCatalog.EstimateBossDps(weapon) * PhysicalEvolution.Power(weapon) * player.DamageMultiplier;
+                    dps += WeaponCatalog.EstimateBossDps(weapon) * player.DamageMultiplier;
                 }
             }
             TeamLevel = Mathf.Max(1, total);

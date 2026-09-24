@@ -14,6 +14,7 @@ namespace RogueSurvivors
         public bool Alive => Current > 0;
         public Vector2 Knockback { get; private set; }
         bool died;
+        PlayerHealth meleeFinisher;
         void Awake() => Current = maximum;
         void OnEnable() => Active.Add(this);
         void OnDisable() => Active.Remove(this);
@@ -34,7 +35,7 @@ namespace RogueSurvivors
         public void ReceiveHit(float amount, Vector2 direction, PlayerHealth source, CombatElement element)
         {
             if (!Alive || amount <= 0 || float.IsNaN(amount) || float.IsInfinity(amount)) return;
-            var bossAI = GetComponent<BossAI>(); if (bossAI && (bossAI.IsTransforming || (!bossAI.PhaseTwo && Current <= maximum * .5f))) return;
+            var bossAI = GetComponent<BossAI>(); if (bossAI && (bossAI.IsTransforming || (bossAI.Phase < 3 && Current <= maximum * .5f))) return;
             var reactions = GetComponent<ElementReaction>();
             if (!reactions) reactions = gameObject.AddComponent<ElementReaction>();
             if (element == CombatElement.None && GetComponent<EnemyAilment>()) amount *= GetComponent<EnemyAilment>().PhysicalMultiplier;
@@ -43,18 +44,21 @@ namespace RogueSurvivors
             var parts = GetComponent<BossParts>();
             Vector2 origin = source ? (Vector2)source.transform.position : (Vector2)transform.position - direction;
             if (parts && parts.Absorb(amount * (element == CombatElement.None ? 1.35f : 1), origin)) return;
-            if (bossAI && !bossAI.PhaseTwo) amount = Mathf.Min(amount, Mathf.Max(0, Current - maximum * .5f));
+            if (bossAI && bossAI.Phase < 3) amount = Mathf.Min(amount, Mathf.Max(0, Current - maximum * .5f));
+            meleeFinisher=element==CombatElement.None && source && Vector2.Distance(source.transform.position,transform.position)<=4 ? source : null;
             ApplyDamage(amount, direction);
         }
         public void ReceiveSecondary(float amount, PlayerHealth source)
         {
             var sync = GetComponent<NetworkEnemySync>(); if (sync && sync.IsNetworked && !sync.IsAuthority) return;
             if (!Alive || amount <= 0) return;
+            var transformingBoss=GetComponent<BossAI>(); if(transformingBoss && transformingBoss.IsTransforming) return;
             var parts = GetComponent<BossParts>();
             if (parts && parts.Absorb(amount, source ? (Vector2)source.transform.position : (Vector2)transform.position)) return;
             var bossAI = GetComponent<BossAI>();
             if (bossAI && bossAI.IsTransforming) return;
-            if (bossAI && !bossAI.PhaseTwo) amount = Mathf.Min(amount, Mathf.Max(0, Current - maximum * .5f));
+            if (bossAI && bossAI.Phase < 3) amount = Mathf.Min(amount, Mathf.Max(0, Current - maximum * .5f));
+            meleeFinisher=null;
             ApplyDamage(amount, Vector2.zero);
         }
         // Raw health mutation for authority state and deterministic verification only.
@@ -81,7 +85,13 @@ namespace RogueSurvivors
             if (drops)
             {
                 GameManager.Instance?.AddKill();
-                if (orbPrefab) Instantiate(orbPrefab, transform.position, Quaternion.identity).value = experienceValue;
+                if (orbPrefab) {
+                    var orb=Instantiate(orbPrefab,transform.position,Quaternion.identity); orb.value=experienceValue;
+                    if(meleeFinisher && meleeFinisher.IsLocal && meleeFinisher.Alive) {
+                        var rewards=meleeFinisher.GetComponent<MeleeRewards>(); if(!rewards) rewards=meleeFinisher.gameObject.AddComponent<MeleeRewards>();
+                        orb.value=rewards.Reward(experienceValue); orb.Attract(meleeFinisher);
+                    }
+                }
                 if (itemPrefab && Random.value < .055f)
                 {
                     var item = Instantiate(itemPrefab, transform.position + Vector3.right * .3f, Quaternion.identity);

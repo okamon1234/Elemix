@@ -1,0 +1,22 @@
+{
+    "success": true,
+    "role": "guest",
+    "checks": [
+        "Fusion Shared cloud connection",
+        "Two independent clients joined the same private room",
+        "Synchronized arena load and player/boss spawns",
+        "Remote player movement replicated",
+        "Boss difficulty uses both player builds",
+        "Host selected dragon overrides guest boss selection",
+        "Earth reaction shield replicated to guest owner",
+        "Four directional parts broken by guest and replicated; core protected until exposed",
+        "Guest attack reached boss authority and HP replicated",
+        "Boss volley RPC rendered on guest",
+        "Five lightning hazard telegraphs created on guest by attack RPC",
+        "Boss identity and third phase replicated on guest",
+        "Third phase storm hunt attack state replicated on guest",
+        "Victory state replicated and result displayed",
+        "Runner shutdown and return to home"
+    ],
+    "error": ""
+}

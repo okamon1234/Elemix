@@ -11,12 +11,12 @@ namespace RogueSurvivors.Editor
         {
             const string folder="Assets/RogueSurvivors/Resources/RogueSurvivors/Art/Bosses";
             Directory.CreateDirectory(folder);
-            for(int kind=0;kind<4;kind++) for(int phase=0;phase<2;phase++) {
-                string path=folder+"/"+(BossKind)kind+"_"+phase+".png";
-                if(!File.Exists(path)) File.WriteAllBytes(path,BossAppearance.GetSprite((BossKind)kind,phase==1).texture.EncodeToPNG());
+            for(int kind=0;kind<4;kind++) for(int phase=0;phase<3;phase++) {
+                string path=folder+"/"+(BossKind)kind+"_v4_"+phase+".png";
+                if(!File.Exists(path)) File.WriteAllBytes(path,BossAppearance.GetSprite((BossKind)kind,phase+1).texture.EncodeToPNG());
                 AssetDatabase.ImportAsset(path);
                 var importer=(TextureImporter)AssetImporter.GetAtPath(path);
-                importer.textureType=TextureImporterType.Sprite; importer.spritePixelsPerUnit=32;
+                importer.textureType=TextureImporterType.Sprite; importer.spriteImportMode=SpriteImportMode.Single; importer.spritePixelsPerUnit=32;
                 importer.filterMode=FilterMode.Point; importer.textureCompression=TextureImporterCompression.Uncompressed;
                 importer.alphaIsTransparency=true; importer.SaveAndReimport();
             }
@@ -36,7 +36,7 @@ namespace RogueSurvivors.Editor
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene);
             if(opened) EditorSceneManager.CloseScene(scene,true);
             AssetDatabase.SaveAssets();
-            Debug.Log("BOSS_EXPANSION_SETUP_OK: four bosses, eight sprites, 56 x 36 arena.");
+            Debug.Log("BOSS_EXPANSION_SETUP_OK: four bosses, twelve sprites, 56 x 36 arena.");
         }
     }
 }

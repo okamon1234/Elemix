@@ -185,6 +185,16 @@ namespace RogueSurvivors
             Check(stats.ElementWeaponCount == 4 && !stats.CanAcquire(stats.GetComponent<DarkWeapon>()) && stats.CanAcquire(stats.GetComponent<SwordWeapon>()) && stats.CanAcquire(stats.GetComponent<WaterWeapon>()), "Four-element cap permits physical additions and owned-weapon upgrades");
             stats.GetComponent<SwordWeapon>().SetLevel(1); stats.GetComponent<ShieldWeapon>().SetLevel(1);
             Check(!stats.CanAcquire(stats.GetComponent<HammerWeapon>()), "Six total weapon slots cap both categories");
+            stats.GetComponent<LightWeapon>().SetLevel(4); stats.GetComponent<DarkWeapon>().SetLevel(4);
+            Check(ElementEvolution.Active(stats.GetComponent<LightWeapon>()) && ElementEvolution.Active(stats.GetComponent<DarkWeapon>()),"Light and dark evolve together at level four");
+            stats.GetComponent<DarkWeapon>().SetLevel(3);
+            Check(!ElementEvolution.Active(stats.GetComponent<LightWeapon>()),"Evolution is removed after ingredient rollback");
+            foreach(var w in stats.GetComponents<WeaponBase>()) w.SetLevel(0);
+            stats.GetComponent<DaggerWeapon>().SetLevel(1);
+            Check(PhysicalEvolution.PartnerWeight(stats,"gauntlet")>PhysicalEvolution.PartnerWeight(stats,"axe"),"Dagger boosts gauntlet offer weight without suppressing unrelated choices");
+            var rewards=player.GetComponent<MeleeRewards>(); if(!rewards) rewards=player.gameObject.AddComponent<MeleeRewards>();
+            Check(rewards.Reward(2)+rewards.Reward(2)+rewards.Reward(2)+rewards.Reward(2)==10,"Melee experience reward adds exactly 25 percent across four kills");
+            Check(StaffCast.Tier(1)==0 && StaffCast.Tier(3)==1 && StaffCast.Tier(5)==2 && StaffCast.Tier(8)==3,"Staff upgrades unlock four visibly different tiers");
             stats.Restore(savedRoster);
             foreach (var weapon in player.GetComponents<WeaponBase>()) weapon.enabled = false;
             var reactionPairs = new[] { new[] { CombatElement.Fire, CombatElement.Wind }, new[] { CombatElement.Fire, CombatElement.Lightning }, new[] { CombatElement.Fire, CombatElement.Ice }, new[] { CombatElement.Fire, CombatElement.Water }, new[] { CombatElement.Water, CombatElement.Lightning }, new[] { CombatElement.Water, CombatElement.Ice }, new[] { CombatElement.Light, CombatElement.Dark }, new[] { CombatElement.Wood, CombatElement.Water }, new[] { CombatElement.Wood, CombatElement.Fire }, new[] { CombatElement.Wood, CombatElement.Lightning }, new[] { CombatElement.Earth, CombatElement.Fire }, new[] { CombatElement.Earth, CombatElement.Water }, new[] { CombatElement.Earth, CombatElement.Ice }, new[] { CombatElement.Earth, CombatElement.Lightning }, new[] { CombatElement.Lightning, CombatElement.Ice }, new[] { CombatElement.Wind, CombatElement.Water }, new[] { CombatElement.Wind, CombatElement.Lightning }, new[] { CombatElement.Wind, CombatElement.Ice } };
@@ -195,7 +205,16 @@ namespace RogueSurvivors
             Check(statusVictim.GetComponent<EnemyAilment>().Frozen, "Water and ice freeze normal enemies");
             yield return new WaitForSeconds(.45f);
             statusVictim.Damage(10, Vector2.zero, player, CombatElement.Fire); statusVictim.Damage(10, Vector2.zero, player, CombatElement.Earth);
-            Check(player.Shield > 0 && player.Shield <= player.Maximum * .2f, "Crystallize grants a capped shield");
+            var crystal=FindFirstObjectByType<CrystalPickup>();
+            Check(crystal && !player.HasBarrier,"Crystallize drops an item instead of instantly granting protection");
+            Vector3 beforePickupPosition=player.transform.position; player.transform.position=crystal.transform.position;
+            yield return new WaitForSeconds(.15f);
+            Check(player.HasBarrier,"Collecting crystal grants one barrier");
+            float barrierHealth=player.Current; player.GrantInvulnerability(0); player.Damage(999);
+            Check(!player.HasBarrier && player.Current==barrierHealth,"Crystal consumes exactly one charge and blocks an entire hit");
+            yield return new WaitForSeconds(.7f); player.Damage(5);
+            Check(player.Current<barrierHealth,"Next hit deals damage after crystal is consumed");
+            player.transform.position=beforePickupPosition;
             yield return new WaitForSeconds(.45f);
             statusVictim.Damage(10, Vector2.zero, player, CombatElement.Wood); statusVictim.Damage(10, Vector2.zero, player, CombatElement.Fire);
             float beforeBurn = statusVictim.Current; yield return new WaitForSeconds(2);
@@ -210,6 +229,9 @@ namespace RogueSurvivors
             yield return new WaitForSeconds(.45f);
             var spreadVictim = Instantiate(prefab, statusVictim.transform.position + Vector3.up, Quaternion.identity).GetComponent<EnemyHealth>(); spreadVictim.GetComponent<EnemyAI>().enabled = false;
             statusVictim.Damage(1, Vector2.zero, player, CombatElement.Water); statusVictim.Damage(1, Vector2.zero, player, CombatElement.Wind);
+            Check(statusVictim.GetComponent<ElementReaction>().Aura==CombatElement.Water,"Swirl retains the original target aura even without nearby targets");
+            statusVictim.Damage(1,Vector2.zero,player,CombatElement.Wind);
+            Check(statusVictim.GetComponent<ElementReaction>().Aura==CombatElement.Water,"Wind during reaction cooldown does not overwrite retained water");
             Check(spreadVictim.GetComponent<ElementReaction>() && spreadVictim.GetComponent<ElementReaction>().Aura == CombatElement.Water, "Swirl spreads the original element without recursive reactions");
             Check(ElementReaction.Recipe(CombatElement.Wind, CombatElement.Wood) == 0 && ElementReaction.Recipe(CombatElement.Wind, CombatElement.Earth) == 0 && ElementReaction.Recipe(CombatElement.Wind, CombatElement.Light) == 0 && ElementReaction.Recipe(CombatElement.Wind, CombatElement.Dark) == 0, "Wood earth light and dark do not swirl");
             Destroy(spreadVictim.gameObject);
@@ -239,14 +261,20 @@ namespace RogueSurvivors
                 player.transform.position = boss.transform.position + new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * 3;
                 armoredHealth.Damage(armor.Maximum + 1, Vector2.zero, player);
                 Check(armor.Health[part] == 0 && armoredHealth.Current == coreBefore, "Directional armor protects core and breaks part " + part);
+                if(part==0) {
+                    yield return new WaitForSeconds(.12f);
+                    Check(boss.Phase==2 && boss.IsTransforming && armoredHealth.Current==coreBefore,"First broken part starts phase two while core is full");
+                    yield return new WaitForSeconds(2.5f);
+                }
             }
             Check(armor.Exposed, "All four armor parts expose boss core");
+            Check(boss.Phase==2,"Breaking remaining parts retains phase two until half HP");
             armoredHealth.Damage(1, Vector2.zero, player);
             Check(armoredHealth.Current == coreBefore - 1, "Exposed boss core takes damage");
             player.transform.position = originalPosition;
             var reactionObject = new GameObject("Element verification");
             var reactions = reactionObject.AddComponent<ElementReaction>();
-            Check(reactions.Resolve(10, CombatElement.Fire, player) == 10 && reactions.Resolve(10, CombatElement.Wind, player) == 18, "Fire plus wind triggers explosion");
+            Check(reactions.Resolve(10, CombatElement.Fire, player) == 10 && reactions.Resolve(10, CombatElement.Wind, player) == 13, "Fire plus wind swirls and retains fire");
             yield return new WaitForSeconds(.45f);
             reactions.Resolve(10, CombatElement.Fire, player);
             Check(reactions.Resolve(10, CombatElement.Lightning, player) == 20, "Fire plus lightning triggers overload");
@@ -254,7 +282,7 @@ namespace RogueSurvivors
             reactions.Resolve(10, CombatElement.Ice, player);
             Check(reactions.Resolve(10, CombatElement.Fire, player) == 24, "Ice plus fire triggers melt in reverse order");
             Destroy(reactionObject);
-            boss.RestoreEncounter(0, false, (int)BossAttack.Charge, Vector2.right*8, 1);
+            boss.RestoreEncounter(0, 2, (int)BossAttack.Charge, Vector2.right*8, 1);
             boss.RestoreState((int)BossState.Windup, .05f, Vector2.right, 1);
             yield return new WaitForSeconds(.12f);
             Check(boss.State == BossState.Dash, "Boss telegraph transitions into dash");
@@ -262,26 +290,30 @@ namespace RogueSurvivors
             armoredHealth.Damage(armoredHealth.maximum*5, Vector2.zero, player);
             Check(Mathf.Approximately(armoredHealth.Current,armoredHealth.maximum*.5f), "Huge hit cannot skip boss transformation");
             yield return new WaitForSeconds(.12f);
-            Check(boss.PhaseTwo && boss.IsTransforming, "Half HP triggers second phase transformation");
+            Check(boss.Phase==3 && boss.IsTransforming, "Half HP triggers third phase transformation");
             float transformedHealth=armoredHealth.Current;
             armoredHealth.Damage(100,Vector2.zero,player); armoredHealth.ReceiveSecondary(100,player);
             Check(armoredHealth.Current==transformedHealth, "Transformation blocks normal and reaction damage");
             yield return new WaitForSeconds(2.5f);
-            Check(boss.PendingAttack==BossAttack.TripleCharge && boss.State==BossState.Windup, "Second phase starts a new triple charge pattern");
+            Check(boss.PendingAttack==BossAttack.SeismicRing && boss.State==BossState.Windup, "Third phase starts the moving seismic ring pattern");
             Check(GameObject.Find("East").transform.position.x==28 && GameObject.Find("North").transform.position.y==18, "Arena expands to 56 by 36 world units");
             player.GrantInvulnerability(50);
             for(int kind=0;kind<4;kind++) {
                 Check(BossAppearance.GetSprite((BossKind)kind,false)!=BossAppearance.GetSprite((BossKind)kind,true), "Distinct before and after graphics: "+(BossKind)kind);
+                Check(BossAppearance.GetSprite((BossKind)kind,2)!=BossAppearance.GetSprite((BossKind)kind,3),"Distinct third-phase graphics: "+(BossKind)kind);
                 Check(BossCatalog.Attack((BossKind)kind,false,0)!=BossCatalog.Attack((BossKind)kind,true,0), "Different phase attack plans: "+(BossKind)kind);
-                for(int phase=0;phase<2;phase++) {
+                for(int phase=0;phase<3;phase++) {
                     boss.GetComponent<BossAttackDirector>().StopAllCoroutines();
                     foreach(var bullet in FindObjectsByType<Bullet>(FindObjectsSortMode.None)) Destroy(bullet.gameObject);
                     foreach(var hazard in FindObjectsByType<BossHazard>(FindObjectsSortMode.None)) Destroy(hazard.gameObject);
+                    foreach(var mechanic in FindObjectsByType<BossMechanic>(FindObjectsSortMode.None)) Destroy(mechanic.gameObject);
                     armoredHealth.SetSynchronizedHealth(armoredHealth.maximum,armoredHealth.maximum);
-                    boss.RestoreEncounter(kind,phase==1,0,Vector2.zero,0);
+                    armor.Restore(phase==0?Vector4.one*armor.Maximum:phase==1?new Vector4(0,armor.Maximum,armor.Maximum,armor.Maximum):Vector4.zero,armor.Maximum);
+                    if(phase==2) armoredHealth.SetSynchronizedHealth(armoredHealth.maximum*.45f,armoredHealth.maximum);
+                    boss.RestoreEncounter(kind,phase+1,0,Vector2.zero,0);
                     boss.RestoreState((int)BossState.Pursue,.01f,Vector2.down,0);
                     yield return new WaitForSeconds(1.6f);
-                    bool fired=kind==0 ? boss.State==BossState.Dash || boss.PendingAttack==BossAttack.TripleCharge : FindObjectsByType<BossHazard>(FindObjectsSortMode.None).Length>0 || FindObjectsByType<Bullet>(FindObjectsSortMode.None).Length>0;
+                    bool fired=boss.State==BossState.Dash || FindObjectsByType<BossHazard>(FindObjectsSortMode.None).Length>0 || FindObjectsByType<BossMechanic>(FindObjectsSortMode.None).Length>0 || FindObjectsByType<Bullet>(FindObjectsSortMode.None).Length>0;
                     Check(fired, "Playable attack executed: "+(BossKind)kind+" phase "+(phase+1));
                 }
             }
@@ -289,6 +321,7 @@ namespace RogueSurvivors
             boss.GetComponent<BossAttackDirector>().StopAllCoroutines();
             foreach(var bullet in FindObjectsByType<Bullet>(FindObjectsSortMode.None)) Destroy(bullet.gameObject);
             foreach(var hazard in FindObjectsByType<BossHazard>(FindObjectsSortMode.None)) Destroy(hazard.gameObject);
+                    foreach(var mechanic in FindObjectsByType<BossMechanic>(FindObjectsSortMode.None)) Destroy(mechanic.gameObject);
             yield return null;
             var testHazard=BossHazard.Create(boss,new Vector2(20,10),new Vector2(20,10),2,1,1,10,Color.red);
             Check(!testHazard.Active && testHazard.Contains(new Vector2(20,10)) && !testHazard.Contains(Vector2.zero), "Hazard warning has no early damage and uses bounded hit area");

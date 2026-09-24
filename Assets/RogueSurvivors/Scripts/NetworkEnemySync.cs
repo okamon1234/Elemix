@@ -45,10 +45,10 @@ namespace RogueSurvivors
             if (IsNetworked && IsAuthority && player && player.GetComponent<NetworkObject>()) RPC_Crystal(player.GetComponent<NetworkObject>().Id);
 #endif
         }
-        public void BroadcastReaction(int element)
+        public void BroadcastReaction(int element, int spread = 0)
         {
 #if ROGUE_FUSION
-            if (IsNetworked && IsAuthority) RPC_Reaction(element);
+            if (IsNetworked && IsAuthority) RPC_Reaction(element, spread);
 #endif
         }
         public void BroadcastVolley(float angle, int count, float speed, float damage)
@@ -57,7 +57,7 @@ namespace RogueSurvivors
             if (IsNetworked && IsAuthority) RPC_Volley(angle, count, speed, damage);
 #endif
         }
-        public void BroadcastAttack(int attack, Vector2 origin, Vector2 target, bool phase, float damage, int mask)
+        public void BroadcastAttack(int attack, Vector2 origin, Vector2 target, int phase, float damage, int mask)
         {
 #if ROGUE_FUSION
             if (IsNetworked && IsAuthority) RPC_Attack(attack, origin, target, phase, damage, mask);
@@ -87,7 +87,7 @@ namespace RogueSurvivors
         [Networked] public int ElementAura { get; set; }
         [Networked] public float ElementRemaining { get; set; }
         [Networked] public int BossType { get; set; }
-        [Networked] public NetworkBool SecondPhase { get; set; }
+        [Networked] public int EncounterPhase { get; set; }
         [Networked] public int PlannedAttack { get; set; }
         [Networked] public Vector2 AimPoint { get; set; }
         [Networked] public int ChargesLeft { get; set; }
@@ -107,7 +107,7 @@ namespace RogueSurvivors
                 HealthValue = health.Current; MaximumHealth = health.maximum;
                 var parts = GetComponent<BossParts>(); PartHealth = parts.Health; PartMaximum = parts.Maximum;
                 var reaction = GetComponent<ElementReaction>(); ElementAura = (int)reaction.Aura; ElementRemaining = reaction.Remaining;
-                BossType = (int)ai.Kind; SecondPhase = ai.PhaseTwo; PlannedAttack = (int)ai.PendingAttack; AimPoint = ai.AimPoint; ChargesLeft = ai.ChargesLeft;
+                BossType = (int)ai.Kind; EncounterPhase = ai.Phase; PlannedAttack = (int)ai.PendingAttack; AimPoint = ai.AimPoint; ChargesLeft = ai.ChargesLeft;
                 StateValue = (int)ai.State; RemainingTime = ai.Remaining;
             }
         }
@@ -123,7 +123,7 @@ namespace RogueSurvivors
                 health.SetSynchronizedHealth(HealthValue, MaximumHealth);
                 GetComponent<BossParts>().Restore(PartHealth, PartMaximum);
                 GetComponent<ElementReaction>().Restore(ElementAura, ElementRemaining);
-                ai.RestoreEncounter(BossType, SecondPhase, PlannedAttack, AimPoint, ChargesLeft);
+                ai.RestoreEncounter(BossType, EncounterPhase, PlannedAttack, AimPoint, ChargesLeft);
                 ai.RestoreState(StateValue, RemainingTime, DashHeading, AttackIndex);
             }
             if (IsAuthority)
@@ -131,7 +131,7 @@ namespace RogueSurvivors
                 HealthValue = health.Current; MaximumHealth = health.maximum;
                 var parts = GetComponent<BossParts>(); PartHealth = parts.Health; PartMaximum = parts.Maximum;
                 var reaction = GetComponent<ElementReaction>(); ElementAura = (int)reaction.Aura; ElementRemaining = reaction.Remaining;
-                BossType = (int)ai.Kind; SecondPhase = ai.PhaseTwo; PlannedAttack = (int)ai.PendingAttack; AimPoint = ai.AimPoint; ChargesLeft = ai.ChargesLeft;
+                BossType = (int)ai.Kind; EncounterPhase = ai.Phase; PlannedAttack = (int)ai.PendingAttack; AimPoint = ai.AimPoint; ChargesLeft = ai.ChargesLeft;
                 StateValue = (int)ai.State; RemainingTime = ai.Remaining; DashHeading = ai.Heading; AttackIndex = ai.AttackIndex;
             }
             wasAuthority = IsAuthority;
@@ -145,7 +145,7 @@ namespace RogueSurvivors
                 health.SetSynchronizedHealth(HealthValue, MaximumHealth);
                 GetComponent<BossParts>().Restore(PartHealth, PartMaximum);
                 GetComponent<ElementReaction>().Restore(ElementAura, ElementRemaining);
-                ai.RestoreEncounter(BossType, SecondPhase, PlannedAttack, AimPoint, ChargesLeft);
+                ai.RestoreEncounter(BossType, EncounterPhase, PlannedAttack, AimPoint, ChargesLeft);
                 ai.RestoreState(StateValue, RemainingTime, DashHeading, AttackIndex);
             }
             if (Result != 0 && GameManager.Instance) GameManager.Instance.Finish(Result == 1);
@@ -165,15 +165,15 @@ namespace RogueSurvivors
             HealthValue = health.Current;
         }
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-        void RPC_Attack(int attack, Vector2 origin, Vector2 target, bool phase, float damage, int mask)
+        void RPC_Attack(int attack, Vector2 origin, Vector2 target, int phase, float damage, int mask)
             => GetComponent<BossAttackDirector>().Execute((BossAttack)attack, origin, target, phase, damage, mask);
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         void RPC_Crystal(NetworkId playerId)
         {
-            if (Runner.TryFindObject(playerId, out var obj)) { var player = obj.GetComponent<PlayerHealth>(); if (player && player.IsLocal) player.GrantShield(player.Maximum * .2f, 5); }
+            if (Runner.TryFindObject(playerId, out var obj)) { var player = obj.GetComponent<PlayerHealth>(); if (player) CrystalPickup.Spawn((Vector2)transform.position+((Vector2)player.transform.position-(Vector2)transform.position).normalized*1.9f,player); }
         }
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-        void RPC_Reaction(int element) => GetComponent<ElementReaction>().Show(element);
+        void RPC_Reaction(int element, int spread) => GetComponent<ElementReaction>().Show(element, (CombatElement)spread);
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         void RPC_Volley(float angle, int count, float speed, float damage) => GetComponent<BossAI>().SpawnVolley(angle, count, speed, damage);
 #endif

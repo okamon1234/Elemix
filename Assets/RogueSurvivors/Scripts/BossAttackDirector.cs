@@ -6,13 +6,16 @@ namespace RogueSurvivors
     {
         BossAI boss;
         void Awake() => boss=GetComponent<BossAI>();
-        public void Execute(BossAttack attack, Vector2 origin, Vector2 target, bool phaseTwo, float damage, int brokenMask)
+        public void Execute(BossAttack attack, Vector2 origin, Vector2 target, bool phaseTwo, float damage, int brokenMask) => Execute(attack,origin,target,phaseTwo?2:1,damage,brokenMask);
+        public void Execute(BossAttack attack, Vector2 origin, Vector2 target, int phase, float damage, int brokenMask)
         {
+            bool phaseTwo=phase>=2;
             Color color=BossCatalog.Colors[(int)boss.Kind];
             float angle=Mathf.Atan2(target.y-origin.y,target.x-origin.x)*Mathf.Rad2Deg;
-            int fewer=(brokenMask&2)!=0?2:0;
-            float life=(brokenMask&4)!=0?.7f:1;
-            float hit=damage*((brokenMask&1)!=0?.8f:1);
+            int fewer=0;
+            float life=1;
+            float hit=damage;
+            if((int)attack>=16) { BossMechanic.Create(boss,attack,origin,target,phase,hit,color); return; }
             switch(attack) {
                 case BossAttack.Shockwave: StartCoroutine(Rings(origin,phaseTwo?3:2,16-fewer,angle,4.2f,hit*.75f,.42f)); break;
                 case BossAttack.CrossSlam:

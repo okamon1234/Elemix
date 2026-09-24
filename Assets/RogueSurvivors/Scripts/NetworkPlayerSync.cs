@@ -51,6 +51,7 @@ namespace RogueSurvivors
             BuildJson = json.Substring(0, Mathf.Min(512, json.Length));
             BuildTail = json.Length > 512 ? json.Substring(512) : "";
         }
+        [Networked] public NetworkBool BarrierValue { get; set; }
         [Networked] public float HealthValue { get; set; }
         [Networked] public NetworkBool Moving { get; set; }
         [Networked] public NetworkBool FacingLeft { get; set; }
@@ -96,7 +97,7 @@ namespace RogueSurvivors
             if (!health) return;
             if (Object.HasStateAuthority)
             {
-                HealthValue = health.Current;
+                HealthValue = health.Current; BarrierValue = health.HasBarrier;
                 Moving = GetComponent<Rigidbody2D>().linearVelocity.sqrMagnitude > .01f;
                 FacingLeft = GetComponentInChildren<SpriteRenderer>().flipX;
             }
@@ -107,7 +108,7 @@ namespace RogueSurvivors
             ApplyBuild();
             if (!Object.HasStateAuthority)
             {
-                health.SetRemoteHealth(HealthValue);
+                health.SetRemoteHealth(HealthValue); health.SetRemoteBarrier(BarrierValue);
                 GetComponentInChildren<Animator>().SetBool("IsMoving", Moving);
                 GetComponentInChildren<SpriteRenderer>().flipX = FacingLeft;
             }
@@ -115,6 +116,7 @@ namespace RogueSurvivors
         [Rpc(RpcSources.StateAuthority, RpcTargets.All, InvokeLocal = false)]
         void RPC_WeaponEffect(int kind, Vector2 start, Vector2 end)
         {
+            if (kind >= 1000 && kind < 2000) { int code=kind-1000; StaffCast.Create((CombatElement)(code/100),start,end,(code%100)/2,0,null,(code%2)==1); return; }
             if (kind == 0) GetComponent<FireballWeapon>()?.SpawnAt(start, (end - start).normalized, true);
             if (kind == 1) CombatVisuals.Lightning(start, end);
             if (kind == 2) CombatVisuals.Spear(start, end);

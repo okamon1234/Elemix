@@ -81,14 +81,21 @@ namespace RogueSurvivors
                 health.Damage(10, Vector2.zero, local, CombatElement.Fire);
                 yield return new WaitForSecondsRealtime(.15f);
                 health.Damage(10, Vector2.zero, local, CombatElement.Earth);
+                float pickupDeadline=Time.realtimeSinceStartup+3;
+                while(!FindFirstObjectByType<CrystalPickup>() && Time.realtimeSinceStartup<pickupDeadline) yield return null;
+                var crystal=FindFirstObjectByType<CrystalPickup>();
+                if(!crystal) {Finish(false,"Crystal pickup was not replicated");yield break;}
+                local.GetComponent<Rigidbody2D>().position=crystal.transform.position;
                 float shieldDeadline = Time.realtimeSinceStartup + 3;
-                while (local.Shield <= 0 && Time.realtimeSinceStartup < shieldDeadline) yield return null;
-                if (local.Shield <= 0) { Finish(false, "Crystal shield did not reach guest owner"); yield break; }
+                while (!local.HasBarrier && Time.realtimeSinceStartup < shieldDeadline) yield return null;
+                if (!local.HasBarrier) { Finish(false, "Crystal shield did not reach guest owner"); yield break; }
                 Pass("Earth reaction shield replicated to guest owner");
                 for (int part = 0; part < 4; part++) {
                     float angle = part * Mathf.PI / 2;
                     local.GetComponent<Rigidbody2D>().position = (Vector2)boss.transform.position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 3;
                     yield return new WaitForSecondsRealtime(.4f);
+                    yield return new WaitForSecondsRealtime(part==1?3:0);
+                    while(boss.IsTransforming) yield return null;
                     int hits = 0;
                     while (parts.Health[part] > 0 && hits++ < 200) {
                         float partBefore = parts.Health[part];
@@ -100,6 +107,13 @@ namespace RogueSurvivors
                     }
                 }
             }
+            if(report.role=="host") {
+                while(parts.BrokenCount==0) yield return null;
+                boss.enabled=true; yield return new WaitForSecondsRealtime(.15f);
+                if(boss.Phase!=2 || !boss.IsTransforming) {Finish(false,"First part did not trigger phase two");yield break;}
+                Pass("First broken part triggers phase two while core remains full");
+                yield return new WaitForSecondsRealtime(2.5f); boss.enabled=false; boss.GetComponent<Rigidbody2D>().linearVelocity=Vector2.zero;
+            }
             while (!parts.Exposed) yield return null;
             if (health.Current != health.maximum) { Finish(false, "Core damaged before armor was removed"); yield break; }
             Pass("Four directional parts broken by guest and replicated; core protected until exposed");
@@ -109,16 +123,16 @@ namespace RogueSurvivors
             Pass("Guest attack reached boss authority and HP replicated");
             if (report.role == "host") {
                 boss.GetComponent<NetworkEnemySync>().BroadcastVolley(0, 14, 1, 1);
-                boss.GetComponent<NetworkEnemySync>().BroadcastAttack((int)BossAttack.LightningLanes, boss.transform.position, Vector2.zero, true, 1, 0);
+                boss.GetComponent<NetworkEnemySync>().BroadcastAttack((int)BossAttack.LightningLanes, boss.transform.position, Vector2.zero, 2, 1, 0);
                 yield return new WaitForSecondsRealtime(1.2f);
                 health.ApplyDamage(health.maximum*.55f, Vector2.zero);
                 boss.enabled=true;
                 yield return new WaitForSecondsRealtime(.15f);
-                if (!boss.IsTransforming || !boss.PhaseTwo) { Finish(false,"Authority did not enter transformation"); yield break; }
-                Pass("Authority enters dragon second phase");
+                if (!boss.IsTransforming || boss.Phase<3) { Finish(false,"Authority did not enter transformation"); yield break; }
+                Pass("Authority enters dragon third phase");
                 yield return new WaitForSecondsRealtime(2.6f);
-                if (boss.PendingAttack != BossAttack.Spiral) { Finish(false,"Dragon second phase did not select spiral"); yield break; }
-                Pass("Second phase changes boss attack pattern");
+                if (boss.PendingAttack != BossAttack.StormHunt) { Finish(false,"Dragon third phase did not select storm hunt"); yield break; }
+                Pass("Third phase changes boss attack pattern");
                 yield return new WaitForSecondsRealtime(3);
                 health.ApplyDamage(health.maximum + 1, Vector2.zero);
             }
@@ -127,11 +141,11 @@ namespace RogueSurvivors
                 Pass("Boss volley RPC rendered on guest");
                 while (FindObjectsByType<BossHazard>(FindObjectsSortMode.None).Length < 5) yield return null;
                 Pass("Five lightning hazard telegraphs created on guest by attack RPC");
-                while (!boss.PhaseTwo) yield return null;
+                while (boss.Phase<3) yield return null;
                 if (boss.Kind != BossKind.Dragon) { Finish(false,"Wrong boss type during phase change"); yield break; }
-                Pass("Boss identity and second phase replicated on guest");
-                while (boss.PendingAttack != BossAttack.Spiral) yield return null;
-                Pass("Second phase spiral attack state replicated on guest");
+                Pass("Boss identity and third phase replicated on guest");
+                while (boss.PendingAttack != BossAttack.StormHunt) yield return null;
+                Pass("Third phase storm hunt attack state replicated on guest");
             }
             while (!GameManager.Instance.Won) yield return null;
             Pass("Victory state replicated and result displayed");

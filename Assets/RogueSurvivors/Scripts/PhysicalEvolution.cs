@@ -25,7 +25,18 @@ namespace RogueSurvivors
         }
         public static bool Active(WeaponBase weapon) => Find(weapon) != null;
         public static float Power(WeaponBase weapon) => Active(weapon) ? 1.5f : 1;
-        public static string Name(WeaponBase weapon) => Find(weapon)?.Name ?? WeaponCatalog.Find(weapon.Id)?.Name ?? weapon.Id;
+        public static float PartnerWeight(PlayerStats stats,string candidate)
+        {
+            if(!WeaponCatalog.IsPhysical(candidate)) return 1;
+            float weight=1;
+            foreach(var recipe in Recipes) {
+                string partner=recipe.Weapon==candidate ? recipe.Partner : recipe.Partner==candidate ? recipe.Weapon : null;
+                if(partner==null) continue;
+                foreach(var owned in stats.GetComponents<WeaponBase>()) if(owned.Id==partner && owned.Level>0) weight=UnityEngine.Mathf.Max(weight,owned.Level>=4 ? 4 : 3);
+            }
+            return weight;
+        }
+        public static string Name(WeaponBase weapon) => ElementEvolution.Active(weapon) ? ElementEvolution.Name(weapon) : Find(weapon)?.Name ?? WeaponCatalog.Find(weapon.Id)?.Name ?? weapon.Id;
         public static string Hint(string id)
         {
             foreach (var recipe in Recipes) if (recipe.Weapon == id)

@@ -8,7 +8,7 @@ namespace RogueSurvivors
         public float Maximum { get; private set; }
         public bool Exposed => BrokenCount == 4;
         public int BrokenCount { get { int count = 0; for (int i = 0; i < 4; i++) if (Health[i] <= 0) count++; return count; } }
-        public static readonly string[] Effects = { "攻撃威力低下", "弾数減少", "設置時間短縮", "移動・突進減速" };
+        public static readonly string[] Effects = { "怒り上昇：攻撃力・頻度UP", "怒り上昇：攻撃力・頻度UP", "怒り上昇：攻撃力・頻度UP", "怒り上昇：攻撃力・頻度UP" };
         public static readonly string[] Names = { "右腕", "頭部", "左腕", "脚部" };
         readonly SpriteRenderer[] plates = new SpriteRenderer[4];
         bool initialized;
@@ -77,7 +77,7 @@ namespace RogueSurvivors
                 if (initialized && Health[i] <= 0 && (shownMask & (1 << i)) == 0) {
                     shownMask |= 1 << i;
                     EffectsService.Instance?.Burst(transform.position, new Color(1, .7f, .2f));
-                    HUDController.Instance?.Toast(Exposed ? "全装甲破壊！　本体を攻撃！" : PartName(i) + "を破壊！　" + Effects[i] + "・残りの部位を狙おう");
+                    HUDController.Instance?.Toast(Exposed ? "全装甲破壊！　怒り最大・本体を攻撃！" : PartName(i) + "を破壊！　" + Effects[i] + "・残りの部位を狙おう");
                 }
             }
         }

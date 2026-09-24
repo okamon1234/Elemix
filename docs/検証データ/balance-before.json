@@ -1,0 +1,77 @@
+{
+    "runs": [
+        {
+            "character": "ranger",
+            "seed": 12345,
+            "level": 15,
+            "kills": 344,
+            "deaths": 2,
+            "experience": 0,
+            "seconds": 120.00048065185547
+        },
+        {
+            "character": "warden",
+            "seed": 12345,
+            "level": 9,
+            "kills": 308,
+            "deaths": 5,
+            "experience": 14,
+            "seconds": 120.00277709960938
+        },
+        {
+            "character": "knight",
+            "seed": 12345,
+            "level": 15,
+            "kills": 319,
+            "deaths": 2,
+            "experience": 14,
+            "seconds": 120.00316619873047
+        },
+        {
+            "character": "lancer",
+            "seed": 12345,
+            "level": 16,
+            "kills": 335,
+            "deaths": 7,
+            "experience": 68,
+            "seconds": 120.001708984375
+        },
+        {
+            "character": "ranger",
+            "seed": 54321,
+            "level": 13,
+            "kills": 353,
+            "deaths": 3,
+            "experience": 64,
+            "seconds": 120.00025939941406
+        },
+        {
+            "character": "warden",
+            "seed": 54321,
+            "level": 9,
+            "kills": 314,
+            "deaths": 5,
+            "experience": 14,
+            "seconds": 120.00069427490235
+        },
+        {
+            "character": "knight",
+            "seed": 54321,
+            "level": 13,
+            "kills": 330,
+            "deaths": 3,
+            "experience": 0,
+            "seconds": 120.00060272216797
+        },
+        {
+            "character": "lancer",
+            "seed": 54321,
+            "level": 15,
+            "kills": 342,
+            "deaths": 5,
+            "experience": 77,
+            "seconds": 120.00025939941406
+        }
+    ],
+    "error": ""
+}
