@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags:
+  - Enemy
+  - ExpOrb
+  - Item
+  - Bullet
+  - Boss
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - Player
+  - Enemy
+  - Boss
+  - PlayerBullet
+  - EnemyBullet
+  - Pickup
+  - Collector
+  - World
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Background
+    uniqueID: 18270001
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Items
+    uniqueID: 18270002
+    locked: 0
+  - name: Characters
+    uniqueID: 18270003
+    locked: 0
+  - name: Projectiles
+    uniqueID: 18270004
+    locked: 0
+  - name: UI
+    uniqueID: 18270005
+    locked: 0
+  m_RenderingLayers:
+  - Default

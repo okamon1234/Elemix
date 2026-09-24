@@ -1,0 +1,35 @@
+# Unity-generated and machine-local files
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild*/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/Recordings/
+/RogueSurvivorsBackups/
+/.vs/
+/.vscode/
+*.csproj
+*.sln
+*.suo
+*.user
+*.pidb
+*.booproj
+*.unitypackage
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+# Install the licensed Photon Fusion SDK separately (see README).
+/Assets/Photon/
+/Assets/Photon.meta
+/Assets/PhotonAssets/
+/Assets/PhotonAssets.meta
+# Individual connection settings and migration snapshots
+**/PhotonAppSettings.asset*
+**/PhotonServerSettings.asset*
+**/LocalNetworkSettings.json*
+/Assets/RogueSurvivors/MigrationSceneBackups/
+/Assets/RogueSurvivors/MigrationSceneBackups.meta
+/.env*
