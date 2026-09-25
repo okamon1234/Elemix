@@ -16,7 +16,7 @@ namespace RogueSurvivors
             if(!body || !boss) return;
             int phase=boss.Phase-1, key=(int)boss.Kind*3+phase;
             if(key!=last) {
-                last=key; body.sprite=Resources.Load<Sprite>("RogueSurvivors/Art/Bosses/"+boss.Kind+"_v4_"+phase) ?? GetSprite(boss.Kind,boss.Phase); body.color=Color.white; GetComponent<HitFeedback>()?.RefreshColor();
+                last=key; body.sprite=GetSprite(boss.Kind,boss.Phase); body.color=Color.white; GetComponent<HitFeedback>()?.RefreshColor();
                 if(phase>=1) {
                     Color accent=BossCatalog.Colors[(int)boss.Kind];
                     CombatFx.Ring(transform.position,1,accent,1.2f,5,.18f,phase==2?8:32);
@@ -36,6 +36,8 @@ namespace RogueSurvivors
         public static Sprite GetSprite(BossKind kind,int phase)
         {
             bool phaseTwo=phase>=2; int k=(int)kind,p=Mathf.Clamp(phase-1,0,2); if(sprites[k,p]) return sprites[k,p];
+            var sheet=Resources.Load<Texture2D>("RogueSurvivors/Art/Bosses/"+kind+"_v6");
+            if(sheet) { float cell=sheet.width/3f; sprites[k,p]=Sprite.Create(sheet,new Rect(p*cell,0,cell,sheet.height),new Vector2(.5f,.5f),cell/2f,0,SpriteMeshType.FullRect); return sprites[k,p]; }
             const int size=64; var texture=new Texture2D(size,size,TextureFormat.RGBA32,false) { filterMode=FilterMode.Point, name=BossCatalog.Names[k]+(phaseTwo?"・変身後":"・通常") };
             Color dark=new Color(.08f,.1f,.14f), accent=BossCatalog.Colors[k];
             for(int y=0;y<size;y++) for(int x=0;x<size;x++) {

@@ -21,9 +21,14 @@ namespace RogueSurvivors
             for (int i = 0; i < options.Count; i++)
             {
                 int index = i;
-                var button = UIFactory.Button("Card" + i, panel.transform, new Vector2(.5f, .5f), new Vector2((i - 1) * 335, -30), new Vector2(310, 310),
+                var button = UIFactory.Button("Card" + i, panel.transform, new Vector2(.5f, .5f), new Vector2((i - 1) * 335, -65), new Vector2(310, 350),
                     "[ " + (i + 1) + " ]\n\n" + options[i].Title + "\n\n" + options[i].Description, () => selected?.Invoke(index));
-                button.GetComponentInChildren<Text>().fontSize = 17;
+                var label=button.GetComponentInChildren<Text>();label.fontSize=16;
+                label.text=options[i].Title+"\n\n"+options[i].Description;
+                label.rectTransform.anchoredPosition=new Vector2(0,-40);label.rectTransform.sizeDelta=new Vector2(280,250);
+                UIFactory.Label("番号",button.transform,new Vector2(.5f,.5f),new Vector2(85,130),new Vector2(56,44),(i+1).ToString(),25,UIFactory.Cyan,TextAnchor.MiddleCenter);
+                var art=ArsenalArt.Upgrade(options[i].Kind);
+                if(art) {var icon=UIFactory.Panel("武器",button.transform,new Vector2(.5f,.5f),new Vector2(-30,130),new Vector2(78,78),Color.white);icon.sprite=art;icon.preserveAspect=true;icon.raycastTarget=false;}
                 if (i == 0 && EventSystem.current) EventSystem.current.SetSelectedGameObject(button.gameObject);
             }
         }

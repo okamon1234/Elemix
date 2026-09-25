@@ -53,6 +53,7 @@ namespace RogueSurvivors
         void Update()
         {
             if(warning) {
+                foreach(var renderer in warning.GetComponentsInChildren<SpriteRenderer>()) { renderer.sortingLayerName="Projectiles"; renderer.sortingOrder=110; }
                 bool dash=PendingAttack==BossAttack.Charge || PendingAttack==BossAttack.TripleCharge;
                 warning.gameObject.SetActive(State==BossState.Windup && dash && health.Alive);
                 warning.rotation=Quaternion.Euler(0,0,Mathf.Atan2(Heading.y,Heading.x)*Mathf.Rad2Deg);
@@ -117,7 +118,7 @@ namespace RogueSurvivors
         void Aim(PlayerHealth target) { AimPoint=BossArena.Clamp(target.transform.position); Heading=(AimPoint-body.position).normalized; if(Heading.sqrMagnitude<.1f) Heading=Vector2.down; }
         void BeginAttack(PlayerHealth target)
         {
-            PendingAttack=BossCatalog.Attack(Kind,Phase,AttackIndex++); Aim(target);
+            PendingAttack=BossAttackRoutes.Choose(Kind,Phase,AttackIndex++,parts.BreakOrder); Aim(target);
             ChargesLeft=PendingAttack==BossAttack.TripleCharge?3:1;
             State=BossState.Windup; Remaining=Mathf.Max(.85f,1.25f/Mathf.Sqrt(AttackRate)); body.linearVelocity=Vector2.zero;
         }

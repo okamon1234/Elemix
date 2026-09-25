@@ -29,7 +29,7 @@ namespace RogueSurvivors
         LineRenderer MakeLine(string name,float width,int order)
         {
             var line=new GameObject(name).AddComponent<LineRenderer>();line.transform.SetParent(transform,false);line.sharedMaterial=material;
-            line.sortingLayerName="Items";line.sortingOrder=order;line.startWidth=line.endWidth=width; return line;
+            line.sortingLayerName = "Projectiles";line.sortingOrder = 100 + order;line.startWidth=line.endWidth=width; return line;
         }
         bool IsRing => attack==BossAttack.SeismicRing || attack==BossAttack.WebCage || attack==BossAttack.Harvest;
         float Radius(float progress) => attack==BossAttack.SeismicRing?Mathf.Lerp(2,18,progress):attack==BossAttack.WebCage?Mathf.Lerp(8,2.5f,progress):Mathf.Lerp(15,3,progress);

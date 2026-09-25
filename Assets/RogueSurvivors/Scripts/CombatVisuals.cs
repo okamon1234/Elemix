@@ -5,6 +5,7 @@ namespace RogueSurvivors
     {
         public static void Lightning(Vector2 start, Vector2 end)
         {
+            WeaponCastVisual.Show("lightning",start,end-start);
             var go = new GameObject("雷の軌跡"); var line = go.AddComponent<LineRenderer>();
             line.sharedMaterial = Resources.Load<GameObject>("RogueSurvivors/PlayerBullet").GetComponentInChildren<SpriteRenderer>().sharedMaterial;
             line.positionCount = 7; line.startWidth = .13f; line.endWidth = .05f; line.sortingLayerName = "Projectiles";

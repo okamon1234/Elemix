@@ -17,6 +17,7 @@ namespace RogueSurvivors
         }
         void LaunchVisual()
         {
+            WeaponCastVisual.Show(ArsenalArt.ElementId(element),origin,heading);
             Color c=ElementWeapon.ColorFor(element);
             CombatFx.Ring(origin,.4f+tier*.1f,new Color(c.r,c.g,c.b,.7f),.4f,.4f,.045f,6);
             CombatMote.Create(origin,Vector2.zero,Color.Lerp(c,Color.white,.6f),new Vector2(.4f,.4f),.25f,3);
@@ -79,7 +80,8 @@ namespace RogueSurvivors
         }
         void HitPulse(int index)
         {
-            float radius=Radius(element,level,evolved); Color c=ElementWeapon.ColorFor(element);
+            float radius=Radius(element,level,evolved); WeaponCastVisual.Show(ArsenalArt.ElementId(element),origin,heading);
+            Color c=ElementWeapon.ColorFor(element);
             Vector2 side=new Vector2(-heading.y,heading.x), point=target;
             if(element==CombatElement.Wood) point+=side*(index%2==0?-1:1)*radius*.45f;
             if(element==CombatElement.Water) point+=heading*index*.65f;

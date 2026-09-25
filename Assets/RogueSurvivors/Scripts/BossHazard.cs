@@ -23,7 +23,7 @@ namespace RogueSurvivors
             if (!material) material = new Material(Shader.Find("Sprites/Default"));
             var line = new GameObject(name).AddComponent<LineRenderer>(); line.transform.SetParent(transform,false);
             line.sharedMaterial = material; line.useWorldSpace = true; line.startWidth = line.endWidth = width;
-            line.sortingLayerName = "Items"; line.sortingOrder = order; return line;
+            line.sortingLayerName = "Projectiles"; line.sortingOrder = 100 + order; return line;
         }
         void BuildVisual()
         {

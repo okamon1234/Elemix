@@ -14,6 +14,7 @@ namespace RogueSurvivors
         public int level = 1;
         public int experience;
         public string characterId = "ranger";
+        public string startingMageWeapon = "fireball";
         public float regeneration;
         public float damageReduction;
         public float moveSpeed = 5;
@@ -26,7 +27,7 @@ namespace RogueSurvivors
         public List<UpgradeRecord> upgradeHistory = new List<UpgradeRecord>();
         public PlayerDataData NetworkCopy()
         {
-            return new PlayerDataData { version = version, level = level, experience = experience, characterId = characterId,
+            return new PlayerDataData { version = version, level = level, experience = experience, characterId = characterId, startingMageWeapon = MageLoadout.ValidWeapon(startingMageWeapon),
                 regeneration = regeneration, damageReduction = damageReduction, moveSpeed = moveSpeed, damageMultiplier = damageMultiplier,
                 maxHealth = maxHealth, pickupRadius = pickupRadius, kills = kills, weapons = new List<WeaponSaveData>(weapons), physicalFusions=physicalFusions==null?new List<string>():new List<string>(physicalFusions) };
         }

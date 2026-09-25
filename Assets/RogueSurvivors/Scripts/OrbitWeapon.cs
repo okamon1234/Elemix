@@ -12,7 +12,11 @@ namespace RogueSurvivors
         protected override void Update()
         {
             int count = Level == 0 || !Health.Alive || PhysicalEvolution.Active(this) ? 0 : 1 + Level / 2;
-            while (blades.Count < count) blades.Add(Instantiate(bladePrefab, transform).transform);
+            while (blades.Count < count) {
+                var blade=Instantiate(bladePrefab,transform).transform;blades.Add(blade);
+                var renderer=blade.GetComponentInChildren<SpriteRenderer>();var art=ArsenalArt.Weapon("orbit");
+                if(renderer && art) {renderer.sprite=art;renderer.color=new Color(1,1,1,.76f);}
+            }
             while (blades.Count > count) { Destroy(blades[blades.Count - 1].gameObject); blades.RemoveAt(blades.Count - 1); }
             angle += Time.deltaTime * (110 + Level * 10);
             for (int i = 0; i < blades.Count; i++)

@@ -84,6 +84,9 @@ namespace RogueSurvivors
         [Networked] public float AttackRate { get; set; }
         [Networked] public Vector4 PartHealth { get; set; }
         [Networked] public float PartMaximum { get; set; }
+        [Networked] public int PartBreakOrder { get; set; }
+        [Networked] public Vector3 BloomState { get; set; }
+        [Networked] public NetworkId BloomSource { get; set; }
         [Networked] public int ElementAura { get; set; }
         [Networked] public float ElementRemaining { get; set; }
         [Networked] public int BossType { get; set; }
@@ -105,7 +108,9 @@ namespace RogueSurvivors
                 var difficulty = GetComponent<BossDifficulty>();
                 TeamLevel = difficulty.TeamLevel; DamageScale = difficulty.DamageScale; AttackRate = difficulty.AttackRate;
                 HealthValue = health.Current; MaximumHealth = health.maximum;
-                var parts = GetComponent<BossParts>(); PartHealth = parts.Health; PartMaximum = parts.Maximum;
+                var parts = GetComponent<BossParts>(); PartHealth = parts.Health; PartMaximum = parts.Maximum; PartBreakOrder = parts.BreakOrder;
+                var bloom = GetComponent<ReactionDamage>();
+                if(bloom) { BloomState = bloom.CaptureBloom(); var owner=bloom.BloomOwner ? bloom.BloomOwner.GetComponent<NetworkObject>() : null; BloomSource=owner && owner.IsValid?owner.Id:default; }
                 var reaction = GetComponent<ElementReaction>(); ElementAura = (int)reaction.Aura; ElementRemaining = reaction.Remaining;
                 BossType = (int)ai.Kind; EncounterPhase = ai.Phase; PlannedAttack = (int)ai.PendingAttack; AimPoint = ai.AimPoint; ChargesLeft = ai.ChargesLeft;
                 StateValue = (int)ai.State; RemainingTime = ai.Remaining;
@@ -121,7 +126,9 @@ namespace RogueSurvivors
             if (IsAuthority && !wasAuthority)
             {
                 health.SetSynchronizedHealth(HealthValue, MaximumHealth);
-                GetComponent<BossParts>().Restore(PartHealth, PartMaximum);
+                GetComponent<BossParts>().Restore(PartHealth, PartMaximum, PartBreakOrder);
+                var bloom = GetComponent<ReactionDamage>(); if(!bloom) bloom=gameObject.AddComponent<ReactionDamage>();
+                bloom.RestoreBloom(BloomState,Runner.TryFindObject(BloomSource,out var bloomOwner)?bloomOwner.GetComponent<PlayerHealth>():null);
                 GetComponent<ElementReaction>().Restore(ElementAura, ElementRemaining);
                 ai.RestoreEncounter(BossType, EncounterPhase, PlannedAttack, AimPoint, ChargesLeft);
                 ai.RestoreState(StateValue, RemainingTime, DashHeading, AttackIndex);
@@ -129,7 +136,9 @@ namespace RogueSurvivors
             if (IsAuthority)
             {
                 HealthValue = health.Current; MaximumHealth = health.maximum;
-                var parts = GetComponent<BossParts>(); PartHealth = parts.Health; PartMaximum = parts.Maximum;
+                var parts = GetComponent<BossParts>(); PartHealth = parts.Health; PartMaximum = parts.Maximum; PartBreakOrder = parts.BreakOrder;
+                var bloom = GetComponent<ReactionDamage>();
+                if(bloom) { BloomState = bloom.CaptureBloom(); var owner=bloom.BloomOwner ? bloom.BloomOwner.GetComponent<NetworkObject>() : null; BloomSource=owner && owner.IsValid?owner.Id:default; }
                 var reaction = GetComponent<ElementReaction>(); ElementAura = (int)reaction.Aura; ElementRemaining = reaction.Remaining;
                 BossType = (int)ai.Kind; EncounterPhase = ai.Phase; PlannedAttack = (int)ai.PendingAttack; AimPoint = ai.AimPoint; ChargesLeft = ai.ChargesLeft;
                 StateValue = (int)ai.State; RemainingTime = ai.Remaining; DashHeading = ai.Heading; AttackIndex = ai.AttackIndex;
@@ -143,7 +152,9 @@ namespace RogueSurvivors
             if (!IsAuthority)
             {
                 health.SetSynchronizedHealth(HealthValue, MaximumHealth);
-                GetComponent<BossParts>().Restore(PartHealth, PartMaximum);
+                GetComponent<BossParts>().Restore(PartHealth, PartMaximum, PartBreakOrder);
+                var bloom = GetComponent<ReactionDamage>(); if(!bloom) bloom=gameObject.AddComponent<ReactionDamage>();
+                bloom.RestoreBloom(BloomState,Runner.TryFindObject(BloomSource,out var bloomOwner)?bloomOwner.GetComponent<PlayerHealth>():null);
                 GetComponent<ElementReaction>().Restore(ElementAura, ElementRemaining);
                 ai.RestoreEncounter(BossType, EncounterPhase, PlannedAttack, AimPoint, ChargesLeft);
                 ai.RestoreState(StateValue, RemainingTime, DashHeading, AttackIndex);

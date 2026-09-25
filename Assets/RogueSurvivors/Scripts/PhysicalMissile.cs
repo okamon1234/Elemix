@@ -17,8 +17,9 @@ namespace RogueSurvivors
             shot.range=range;shot.life=seconds;shot.damage=damage;shot.source=owner;shot.motion=motion;shot.radius=radius;shot.remaining=pierce;shot.spin=spin;
             go.transform.position=from;go.transform.localScale=Vector3.one*size;
             shot.sprite=go.AddComponent<SpriteRenderer>();shot.sprite.sprite=art;shot.sprite.sortingLayerName="Projectiles";shot.sprite.sortingOrder=20;
+            shot.sprite.color = new Color(1,1,1,art == PhysicalFusionArt.Get(7) ? .48f : .76f);
             if(!material)material=new Material(Shader.Find("Sprites/Default"));
-            var trail=go.AddComponent<TrailRenderer>();trail.sharedMaterial=material;trail.time=.13f;trail.startWidth=radius*.7f;trail.endWidth=0;trail.startColor=new Color(.83f,.86f,.89f,.45f);trail.endColor=new Color(.83f,.86f,.89f,0);trail.sortingLayerName="Projectiles";trail.sortingOrder=19;trail.minVertexDistance=.15f;
+            var trail=go.AddComponent<TrailRenderer>();trail.sharedMaterial=material;trail.time=.08f;trail.startWidth=radius*.7f;trail.endWidth=0;trail.startColor=new Color(.83f,.86f,.89f,.45f);trail.endColor=new Color(.83f,.86f,.89f,0);trail.sortingLayerName="Projectiles";trail.sortingOrder=19;trail.minVertexDistance=.15f;
             if(motion==PhysicalMotion.Chain) {shot.chain=new GameObject("鉄球の鎖").AddComponent<LineRenderer>();shot.chain.transform.SetParent(go.transform);shot.chain.sharedMaterial=material;shot.chain.positionCount=17;shot.chain.startWidth=shot.chain.endWidth=.085f;shot.chain.startColor=shot.chain.endColor=new Color(.5f,.54f,.58f);shot.chain.sortingLayerName="Projectiles";shot.chain.sortingOrder=18;}
             return shot;
         }

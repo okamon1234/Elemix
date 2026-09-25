@@ -8,6 +8,7 @@ namespace RogueSurvivors
         public Transform grid;
         public bool arena;
         float shake;
+        BossAI focusBoss;
         Vector3 smoothPosition;
         void OnEnable() => Instance = this;
         void Awake() { Instance = this; smoothPosition = transform.position; }
@@ -18,6 +19,11 @@ namespace RogueSurvivors
             if (arena) cameraComponent.orthographicSize = 10;
             Vector3 desired = target ? target.position : Vector3.zero;
             if (arena) {
+                if(!focusBoss) focusBoss=FindFirstObjectByType<BossAI>();
+                if(target && focusBoss) {
+                    Vector3 offset=(focusBoss.transform.position-target.position)*.5f;
+                    desired+=Vector3.ClampMagnitude(offset,3.5f)+Vector3.up*.5f;
+                }
                 float horizontal = Mathf.Max(0, BossArena.HalfWidth - cameraComponent.orthographicSize * cameraComponent.aspect);
                 float vertical = BossArena.HalfHeight - cameraComponent.orthographicSize;
                 desired.x = Mathf.Clamp(desired.x, -horizontal, horizontal); desired.y = Mathf.Clamp(desired.y, -vertical, vertical);

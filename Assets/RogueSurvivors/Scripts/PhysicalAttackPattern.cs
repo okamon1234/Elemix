@@ -14,7 +14,7 @@ namespace RogueSurvivors
         void Shoot(int art,Vector2 direction,PhysicalMotion motion,float range,float seconds,float size,float radius,int pierce=20,float spin=600)
         {
             if(owner&&!owner.Alive)return;
-            var sprite=art<10?PhysicalFusionArt.Get(art):art==24?Resources.Load<Sprite>("RogueSurvivors/Art/spear"):WeaponArt.Get(art==20?0:art==21?1:6);
+            var sprite=art<10?PhysicalFusionArt.Get(art):WeaponArt.Get(art==24?7:art==25?10:art==20?0:art==21?1:6);
             PhysicalMissile.Create(sprite,origin,direction,range,seconds,power,owner,motion,size,radius,pierce,spin);
         }
         IEnumerator Play()
@@ -53,6 +53,7 @@ namespace RogueSurvivors
                 PhysicalWhipStrike.Create(origin,heading,style==8?7:4.5f+level*.12f,power,owner,style==8);
                 if(style==8) {yield return new WaitForSeconds(.25f);Shoot(8,heading,PhysicalMotion.Return,7,1.25f,1.5f,.6f,20,540);}
             } else if(style==9||style==24) {
+                if(style==24) WeaponCastVisual.Show("crossbow",origin,heading);
                 if(style==9) {
                     var launcher=new GameObject("連射ボウガン本体").AddComponent<SpriteRenderer>();launcher.sprite=PhysicalFusionArt.Get(9);launcher.sortingLayerName="Projectiles";launcher.sortingOrder=20;
                     launcher.transform.position=origin+heading*.6f;launcher.transform.rotation=Quaternion.Euler(0,0,Mathf.Atan2(heading.y,heading.x)*Mathf.Rad2Deg);Destroy(launcher.gameObject,.5f);
@@ -62,7 +63,7 @@ namespace RogueSurvivors
                     for(int i=0;i<count;i++)Shoot(24,Quaternion.Euler(0,0,(i-(count-1)*.5f)*9)*heading,PhysicalMotion.Straight,12,.6f,style==9?1.45f:1,.25f,4+level/2,0);
                     yield return new WaitForSeconds(.16f);
                 }
-            } else if(style==25) {int count=1+level/4;for(int i=0;i<count;i++)Shoot(7,Quaternion.Euler(0,0,(i-(count-1)*.5f)*30)*heading,PhysicalMotion.Return,7,1.2f,.7f,.38f,15,620);}
+            } else if(style==25) {int count=1+level/4;for(int i=0;i<count;i++)Shoot(25,Quaternion.Euler(0,0,(i-(count-1)*.5f)*30)*heading,PhysicalMotion.Return,7,1.2f,.7f,.38f,15,620);}
             Destroy(gameObject);
         }
     }

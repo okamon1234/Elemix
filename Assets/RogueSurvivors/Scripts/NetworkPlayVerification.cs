@@ -70,6 +70,7 @@ namespace RogueSurvivors
             Pass("Remote player movement replicated");
             if(report.role=="guest") {
                 var fusionStats=local.GetComponent<PlayerStats>();
+                var mage=CharacterCatalog.CreateBuild("mage","wood");mage.level=fusionStats.Level;fusionStats.Restore(mage);
                 foreach(var w in local.GetComponents<WeaponBase>())w.SetLevel(0);
                 fusionStats.GetComponent<DaggerWeapon>().SetLevel(4);fusionStats.GetComponent<GauntletWeapon>().SetLevel(4);
                 local.GetComponent<NetworkPlayerSync>().PublishBuild();
@@ -79,6 +80,8 @@ namespace RogueSurvivors
                 while(!remote.GetComponent<PlayerStats>().FusionIds.Contains("knifegloves"))yield return null;
                 if(remote.GetComponent<PlayerStats>().WeaponCount!=1){Finish(false,"Fusion did not replicate as one weapon slot");yield break;}
                 Pass("Two ingredients replicated as a single fused weapon");
+                if(remote.GetComponent<PlayerStats>().StartingMageWeapon!="wood") {Finish(false,"Mage starting choice did not replicate");yield break;}
+                Pass("Mage initial wood element replicated independently from current weapons");
                 local.GetComponent<NetworkPlayerSync>().BroadcastEffect(2024,local.transform.position,local.transform.position+Vector3.right*5);
             }
             yield return new WaitForSecondsRealtime(.8f);
@@ -104,6 +107,18 @@ namespace RogueSurvivors
                 while (!local.HasBarrier && Time.realtimeSinceStartup < shieldDeadline) yield return null;
                 if (!local.HasBarrier) { Finish(false, "Crystal shield did not reach guest owner"); yield break; }
                 Pass("Earth reaction shield replicated to guest owner");
+                yield return new WaitForSecondsRealtime(1);
+                health.Damage(10,Vector2.zero,local,CombatElement.Water);
+                yield return new WaitForSecondsRealtime(.2f);
+                health.Damage(10,Vector2.zero,local,CombatElement.Wood);
+                while(boss.GetComponent<NetworkEnemySync>().BloomState.z!=1)yield return null;
+                Pass("Guest created a seed on authority and received its synchronized state");
+                yield return new WaitForSecondsRealtime(.8f);
+                health.Damage(10,Vector2.zero,local,CombatElement.Lightning);
+                while(boss.GetComponent<NetworkEnemySync>().BloomState.z!=2)yield return null;
+                Pass("Guest third element triggered synchronized hyperbloom");
+                while(boss.GetComponent<NetworkEnemySync>().BloomState.z!=0)yield return null;
+                Pass("Consumed seed cleared on guest without duplicate detonation");
                 for (int part = 0; part < 4; part++) {
                     float angle = part * Mathf.PI / 2;
                     local.GetComponent<Rigidbody2D>().position = (Vector2)boss.transform.position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 3;
@@ -122,6 +137,10 @@ namespace RogueSurvivors
                 }
             }
             if(report.role=="host") {
+                while(boss.GetComponent<NetworkEnemySync>().BloomState.z!=1) yield return null;
+                Pass("Authority created shared seed from guest hits");
+                while(boss.GetComponent<NetworkEnemySync>().BloomState.z!=2) yield return null;
+                Pass("Authority accepted guest third element once");
                 while(parts.BrokenCount==0) yield return null;
                 boss.enabled=true; yield return new WaitForSecondsRealtime(.15f);
                 if(boss.Phase!=2 || !boss.IsTransforming) {Finish(false,"First part did not trigger phase two");yield break;}
@@ -131,6 +150,8 @@ namespace RogueSurvivors
             while (!parts.Exposed) yield return null;
             if (health.Current != health.maximum) { Finish(false, "Core damaged before armor was removed"); yield break; }
             Pass("Four directional parts broken by guest and replicated; core protected until exposed");
+            if(parts.BreakOrder!=(1|(2<<3)|(3<<6)|(4<<9))) {Finish(false,"Break order was not replicated");yield break;}
+            Pass("Exact part break order replicated to both clients");
             float beforeHit = health.Current;
             if (report.role == "guest") { yield return new WaitForSecondsRealtime(.75f); health.Damage(20, Vector2.zero, local); }
             while (health.Current >= beforeHit) yield return null;
@@ -145,7 +166,7 @@ namespace RogueSurvivors
                 if (!boss.IsTransforming || boss.Phase<3) { Finish(false,"Authority did not enter transformation"); yield break; }
                 Pass("Authority enters dragon third phase");
                 yield return new WaitForSecondsRealtime(2.6f);
-                if (boss.PendingAttack != BossAttack.StormHunt) { Finish(false,"Dragon third phase did not select storm hunt"); yield break; }
+                if (boss.PendingAttack != BossAttackRoutes.Choose(boss.Kind,3,0,parts.BreakOrder)) { Finish(false,"Dragon third phase did not select selected break route"); yield break; }
                 Pass("Third phase changes boss attack pattern");
                 yield return new WaitForSecondsRealtime(3);
                 health.ApplyDamage(health.maximum + 1, Vector2.zero);
@@ -158,8 +179,8 @@ namespace RogueSurvivors
                 while (boss.Phase<3) yield return null;
                 if (boss.Kind != BossKind.Dragon) { Finish(false,"Wrong boss type during phase change"); yield break; }
                 Pass("Boss identity and third phase replicated on guest");
-                while (boss.PendingAttack != BossAttack.StormHunt) yield return null;
-                Pass("Third phase storm hunt attack state replicated on guest");
+                while (boss.PendingAttack != BossAttackRoutes.Choose(boss.Kind,3,0,parts.BreakOrder)) yield return null;
+                Pass("Third phase selected break route attack state replicated on guest");
             }
             while (!GameManager.Instance.Won) yield return null;
             Pass("Victory state replicated and result displayed");

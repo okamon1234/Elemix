@@ -24,6 +24,10 @@ namespace RogueSurvivors
             Directory.CreateDirectory(folder);
             yield return new WaitForSecondsRealtime(1);
             SaveFrame(Path.Combine(folder,"ホーム.png"));
+            for(int tab=0;tab<3;tab++) {FindFirstObjectByType<ArsenalGalleryUI>().Open(tab);yield return new WaitForSecondsRealtime(.1f);SaveFrame(Path.Combine(folder,"武器図鑑_"+tab+".png"));}
+            FindFirstObjectByType<ArsenalGalleryUI>().Close();
+            FindFirstObjectByType<MageLoadoutUI>().Open(null);yield return new WaitForSecondsRealtime(.1f);
+            SaveFrame(Path.Combine(folder,"メイジ初期属性.png"));
             FindFirstObjectByType<BossGuideUI>().Open(); yield return new WaitForSecondsRealtime(.2f);
             SaveFrame(Path.Combine(folder,"ボス攻略.png"));
             FindFirstObjectByType<BuildGuideUI>().Open(); yield return new WaitForSecondsRealtime(.2f);
@@ -86,13 +90,18 @@ namespace RogueSurvivors
                 yield return new WaitForSecondsRealtime(1.5f);
             }
             foreach(var shot in FindObjectsByType<PhysicalMissile>(FindObjectsSortMode.None))Destroy(shot.gameObject);
-            for(int reaction=2;reaction<=13;reaction++) {
+            for(int reaction=2;reaction<=15;reaction++) {
                 Vector2 point=new Vector2((reaction-2)%4*3-4.5f,(reaction-2)/4*3-6);
                 CombatFx.Reaction(reaction,CombatElement.Fire,point);
             }
             player.GrantBarrier(); HUDController.Instance.Toast("属性反応と一撃防御の結晶バリア");
             yield return new WaitForSecondsRealtime(.1f);
             SaveFrame(Path.Combine(folder,"属性反応とバリア.png"));
+            yield return new WaitForSecondsRealtime(1);
+            PhysicalAttackPattern.Create(7,player.transform.position,Vector2.zero,8,0,player);
+            director.Execute(BossAttack.LightningLanes,Vector2.zero,player.transform.position,3,1,0);
+            yield return new WaitForSecondsRealtime(.2f);
+            SaveFrame(Path.Combine(folder,"円盤鎌と敵の予告.png"));
             var options=new System.Collections.Generic.List<UpgradeOption>();
             foreach(var id in new[]{"hammer","wood","crossbow"}) {
                 var weapon=PhysicalEvolution.Weapon(player.GetComponent<PlayerStats>(),id);weapon.SetLevel(0);

@@ -6,6 +6,9 @@ namespace RogueSurvivors
     {
         public Vector4 Health { get; private set; }
         public float Maximum { get; private set; }
+        // Four 3-bit entries, each part index + 1; zero is an unused entry.
+        public int BreakOrder { get; private set; }
+        public int FirstBroken => (BreakOrder & 7) - 1;
         public bool Exposed => BrokenCount == 4;
         public int BrokenCount { get { int count = 0; for (int i = 0; i < 4; i++) if (Health[i] <= 0) count++; return count; } }
         public static readonly string[] Effects = { "怒り上昇：攻撃力・頻度UP", "怒り上昇：攻撃力・頻度UP", "怒り上昇：攻撃力・頻度UP", "怒り上昇：攻撃力・頻度UP" };
@@ -26,7 +29,7 @@ namespace RogueSurvivors
                 var go = new GameObject(Names[i]); go.transform.SetParent(transform, false);
                 float a = i * Mathf.PI / 2;
                 go.transform.localPosition = new Vector3(Mathf.Cos(a), Mathf.Sin(a)) * 1.45f;
-                go.transform.localScale = new Vector3(1.1f, 1.1f, 1);
+                go.transform.localScale = new Vector3(.55f, .55f, 1);
                 plates[i] = go.AddComponent<SpriteRenderer>(); plates[i].sprite = CreatePlate(i);
                 plates[i].sortingLayerName = "Characters"; plates[i].sortingOrder = 5;
                 if (main) plates[i].sharedMaterial = main.sharedMaterial;
@@ -48,10 +51,10 @@ namespace RogueSurvivors
             }
             texture.Apply(); armorSprites[part] = Sprite.Create(texture, new Rect(0, 0, 24, 24), new Vector2(.5f,.5f), 24); return armorSprites[part];
         }
-        public void Restore(Vector4 health, float maximum)
+        public void Restore(Vector4 health, float maximum, int breakOrder = 0)
         {
             if (maximum <= 0) return;
-            initialized = true; Maximum = maximum; Health = health;
+            initialized = true; Maximum = maximum; Health = health; BreakOrder = breakOrder;
         }
         public int PartFrom(Vector2 origin)
         {
@@ -66,6 +69,7 @@ namespace RogueSurvivors
             int index = PartFrom(origin);
             if (Health[index] <= 0) return true;
             Vector4 next = Health; next[index] = Mathf.Max(0, next[index] - damage); Health = next;
+            if(next[index] <= 0) BreakOrder |= (index + 1) << ((BrokenCount - 1) * 3);
             EffectsService.Instance?.Popup(transform.position, PartName(index) + " −" + Mathf.CeilToInt(damage), new Color(1, .8f, .3f));
             return true;
         }
@@ -77,16 +81,17 @@ namespace RogueSurvivors
                 if (initialized && Health[i] <= 0 && (shownMask & (1 << i)) == 0) {
                     shownMask |= 1 << i;
                     EffectsService.Instance?.Burst(transform.position, new Color(1, .7f, .2f));
-                    HUDController.Instance?.Toast(Exposed ? "全装甲破壊！　怒り最大・本体を攻撃！" : PartName(i) + "を破壊！　" + Effects[i] + "・残りの部位を狙おう");
+                    HUDController.Instance?.Toast(Exposed ? "全装甲破壊！　怒り最大・本体を攻撃！" : PartName(i) + "を破壊！　" + RouteDescription);
                 }
             }
         }
+        public string RouteDescription { get { var boss=GetComponent<BossAI>(); return boss ? BossAttackRoutes.Description(boss.Kind, BreakOrder) : ""; } }
         public string Status()
         {
-            if (Exposed) return "本体露出！　攻撃可能";
+            if (Exposed) return "本体露出！　" + RouteDescription;
             string text = "本体無敵　";
             for (int i = 0; i < 4; i++) text += PartName(i) + (Health[i] <= 0 ? "：破壊済 " : "：" + Mathf.CeilToInt(100 * Health[i] / Mathf.Max(1, Maximum)) + "% ");
-            return text;
+            return text + "\n" + RouteDescription;
         }
     }
 }

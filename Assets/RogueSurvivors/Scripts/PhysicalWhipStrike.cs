@@ -10,6 +10,7 @@ namespace RogueSurvivors
         public static void Create(Vector2 origin,Vector2 heading,float reach,float damage,PlayerHealth owner,bool metal)
         {
             var fx=new GameObject(metal?"鎖鎌のなぎ払い":"鞭のしなり").AddComponent<PhysicalWhipStrike>();fx.origin=origin;fx.heading=heading;fx.reach=reach;fx.damage=damage;fx.owner=owner;fx.metal=metal;
+            if(!metal)WeaponCastVisual.Show("whip",origin,heading);
             if(!material)material=new Material(Shader.Find("Sprites/Default"));fx.line=fx.gameObject.AddComponent<LineRenderer>();fx.line.sharedMaterial=material;fx.line.positionCount=24;fx.line.sortingLayerName="Projectiles";fx.line.sortingOrder=21;fx.line.startWidth=metal?.15f:.13f;fx.line.endWidth=metal?.1f:.045f;
         }
         void Update()

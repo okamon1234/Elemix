@@ -13,7 +13,7 @@ namespace RogueSurvivors
             fx.reach=Mathf.Clamp(Vector2.Distance(origin,target),1.2f,3.5f); fx.life=kind==2?.36f:.25f;
             fx.angle=Mathf.Atan2(fx.heading.y,fx.heading.x)*Mathf.Rad2Deg;
             fx.sprite=fx.gameObject.AddComponent<SpriteRenderer>(); fx.sprite.sortingLayerName="Projectiles"; fx.sprite.sortingOrder=18;
-            fx.sprite.sprite=kind==7?Resources.Load<Sprite>("RogueSurvivors/Art/spear"):WeaponArt.Get(kind);
+            fx.sprite.sprite=WeaponArt.Get(kind);
             fx.transform.localScale=Vector3.one*(kind==2?1.5f:1.15f);
             Color tint=kind==2||kind==4?new Color(1,.68f,.27f):new Color(.65f,.88f,1);
             if(kind==0||kind==5||kind==7) {

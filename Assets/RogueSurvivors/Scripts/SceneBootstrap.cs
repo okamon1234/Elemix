@@ -35,7 +35,7 @@ namespace RogueSurvivors
             if (mode == RunMode.Solo)
             {
                 var player = Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
-                player.GetComponent<PlayerStats>().Restore(CharacterCatalog.CreateBuild(GameManager.Instance.SelectedCharacter));
+                player.GetComponent<PlayerStats>().Restore(CharacterCatalog.CreateBuild(GameManager.Instance.SelectedCharacter, MageLoadout.SelectedWeapon));
                 BindLocal(player.GetComponent<PlayerHealth>(), true);
                 var spawner = new GameObject("EnemySpawner").AddComponent<EnemySpawner>(); spawner.prefab = enemyPrefab;
                 HUDController.Instance.Toast("武器を育ててボスに挑もう　／　時間が経つほど敵が強くなります");

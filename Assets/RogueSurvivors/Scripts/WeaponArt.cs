@@ -8,6 +8,7 @@ namespace RogueSurvivors
         public static Sprite Get(int kind)
         {
             if (sprites.TryGetValue(kind, out var result) && result) return result;
+            var painted=ArsenalArt.Physical(kind); if(painted) {sprites[kind]=painted;return painted;}
             var texture = new Texture2D(32,32,TextureFormat.RGBA32,false); texture.filterMode = FilterMode.Point;
             for (int y = 0; y < 32; y++) for (int x = 0; x < 32; x++) {
                 bool handle = y >= 14 && y <= 17 && x >= 3 && x <= 19;

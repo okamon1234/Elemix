@@ -17,8 +17,10 @@ namespace RogueSurvivors
         public void Launch(Vector2 heading, float power, float velocity, int penetration, bool enemy, PlayerHealth source = null, bool visualOnly = false)
         {
             body = GetComponent<Rigidbody2D>(); direction = heading.normalized;
+            if(!enemy) WeaponCastVisual.Show("bolt",transform.position,heading);
             damage = power; speed = velocity; pierce = penetration; hostile = enemy; owner = source; cosmetic = visualOnly;
             expires = Time.time + (enemy ? 7 : 2.2f);
+            foreach (var renderer in GetComponentsInChildren<SpriteRenderer>()) { renderer.sortingLayerName="Projectiles"; renderer.sortingOrder=enemy?160:10; }
             transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             gameObject.layer = LayerMask.NameToLayer(enemy ? "EnemyBullet" : "PlayerBullet");
         }

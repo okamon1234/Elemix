@@ -27,7 +27,7 @@ namespace RogueSurvivors
                 if(left>0){data.weapons.Add(new WeaponSaveData("crossbow",1));left--;}
                 for(int i=0;left>0;i++,left--)data.weapons[i%(pairs*2)].level++;
             } else {
-                string[] ids=name=="reaction"?new[]{"fireball","water","ice","bolt"}:new[]{"light","dark","water","lightning"};
+                string[] ids=name=="hyperbloom"?new[]{"water","wood","lightning","bolt"}:name=="burgeon"?new[]{"water","wood","fireball","bolt"}:name=="reaction"?new[]{"fireball","water","ice","bolt"}:new[]{"light","dark","water","lightning"};
                 int used=0;foreach(var id in ids){int level=Mathf.Min(8,points/4);data.weapons.Add(new WeaponSaveData(id,level));used+=level;}
                 if(points>used){int level=Mathf.Min(8,points-used);data.weapons.Add(new WeaponSaveData("crossbow",level));used+=level;}
                 if(points>used)data.weapons.Add(new WeaponSaveData("dagger",points-used));
@@ -48,7 +48,7 @@ namespace RogueSurvivors
         }
         IEnumerator Start()
         {
-            foreach(int points in new[]{16,32,48})foreach(string build in new[]{"physical","reaction","lightdark"}) {
+            foreach(int points in new[]{16,32,48})foreach(string build in new[]{"physical","reaction","lightdark","hyperbloom","burgeon"}) {
                 yield return Load(build,points,0);player.GrantInvulnerability(60);body.position=new Vector2(2.8f,0);
                 enemy.SetSynchronizedHealth(1000000,1000000);parts.Restore(Vector4.one*1000000,1000000);
                 float start=Time.time;yield return new WaitForSeconds(8);
@@ -57,7 +57,7 @@ namespace RogueSurvivors
                 float before=enemy.Current;start=Time.time;yield return new WaitForSeconds(8);row.coreDps=(before-enemy.Current)/(Time.time-start);row.seconds=16;report.runs.Add(row);Write();
                 if(!string.IsNullOrEmpty(report.error)){Restore();UnityEditor.EditorApplication.isPlaying=false;yield break;}
             }
-            foreach(int kind in new[]{0,1,2,3})foreach(string build in new[]{"physical","reaction","lightdark"}) {
+            foreach(int kind in new[]{0,1,2,3})foreach(string build in new[]{"physical","reaction","lightdark","hyperbloom","burgeon"}) {
                 UnityEngine.Random.InitState(24680+kind);yield return Load(build,48,kind);boss.enabled=true;live=true;
                 var row=new Row{test="live",build=build,boss=((BossKind)kind).ToString(),points=48,slots=stats.WeaponCount,fusions=stats.FusionIds.Count,bossMaximum=enemy.maximum,armorTime=-1};
                 float start=Time.time,lastHP=player.Current;

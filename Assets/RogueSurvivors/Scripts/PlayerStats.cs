@@ -13,6 +13,7 @@ namespace RogueSurvivors
         public int WeaponCount { get { PhysicalEvolution.Refresh(this); int count=0; foreach(var w in GetComponents<WeaponBase>()) if(w.Level>0) count++; return count-FusionIds.Count; } }
         void Awake()
         {
+            if (!GetComponent<CharacterAppearance>()) gameObject.AddComponent<CharacterAppearance>();
             if (!GetComponent<BossRecovery>()) gameObject.AddComponent<BossRecovery>();
             if (!GetComponent<DaggerWeapon>()) gameObject.AddComponent<DaggerWeapon>();
             if (!GetComponent<AxeWeapon>()) gameObject.AddComponent<AxeWeapon>();
@@ -36,6 +37,7 @@ namespace RogueSurvivors
         public int Level { get; private set; } = 1;
         public int Experience { get; private set; }
         public string CharacterId { get; private set; } = "ranger";
+        public string StartingMageWeapon { get; private set; } = "fireball";
         public float Regeneration { get; private set; }
         public float DamageReduction { get; private set; }
         public int RequiredExperience => 8 + (Level - 1) * 5;
@@ -78,7 +80,7 @@ namespace RogueSurvivors
                     }
                 } else {
                     // Legacy saves did not record choice order. Preserve the character's starting kit.
-                    var initial = CharacterCatalog.CreateBuild(CharacterId); WeaponBase strongest = null;
+                    var initial = CharacterCatalog.CreateBuild(CharacterId, StartingMageWeapon); WeaponBase strongest = null;
                     foreach (var weapon in GetComponents<WeaponBase>()) {
                         int minimum = initial.weapons.Find(w => w.id == weapon.Id)?.level ?? 0;
                         if (PhysicalEvolution.Active(weapon) && PhysicalEvolution.DisplayLevel(weapon)==1 && WeaponCount>=6) continue;
@@ -125,7 +127,7 @@ namespace RogueSurvivors
         {
             var result = new PlayerDataData { level = Level, experience = Experience, moveSpeed = MoveSpeed,
                 damageMultiplier = DamageMultiplier, maxHealth = MaxHealth, pickupRadius = PickupRadius,
-                characterId = CharacterId, regeneration = Regeneration, damageReduction = DamageReduction,
+                characterId = CharacterId, startingMageWeapon = StartingMageWeapon, regeneration = Regeneration, damageReduction = DamageReduction,
                 kills = GameManager.Instance ? GameManager.Instance.Kills : 0 };
             PhysicalEvolution.Refresh(this); result.physicalFusions=new System.Collections.Generic.List<string>(FusionIds);
             result.upgradeHistory = new System.Collections.Generic.List<UpgradeRecord>(upgradeHistory);
@@ -138,11 +140,12 @@ namespace RogueSurvivors
             if (data == null || !data.IsValid()) return;
             Level = data.level; Experience = data.experience; MoveSpeed = data.moveSpeed;
             DamageMultiplier = data.damageMultiplier; MaxHealth = data.maxHealth; PickupRadius = data.pickupRadius;
+            StartingMageWeapon = MageLoadout.ValidWeapon(data.startingMageWeapon);
             CharacterId = CharacterCatalog.Find(data.characterId).Id; Regeneration = Mathf.Min(2, data.regeneration); DamageReduction = data.damageReduction;
             upgradeHistory = data.upgradeHistory == null ? new System.Collections.Generic.List<UpgradeRecord>() : new System.Collections.Generic.List<UpgradeRecord>(data.upgradeHistory);
             var sprite = GetComponentInChildren<SpriteRenderer>();
             if (sprite) {
-                var portrait = Resources.Load<Sprite>("RogueSurvivors/Art/" + CharacterId);
+                var portrait = ArsenalArt.Hero(CharacterId) ?? Resources.Load<Sprite>("RogueSurvivors/Art/" + CharacterId);
                 if (portrait) sprite.sprite = portrait;
                 sprite.color = Color.white; GetComponent<HitFeedback>()?.RefreshColor();
             }

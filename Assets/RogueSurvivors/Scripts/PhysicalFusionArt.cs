@@ -8,6 +8,7 @@ namespace RogueSurvivors
         public static Sprite Get(int style)
         {
             style=Mathf.Clamp(style,0,9);if(sprites[style])return sprites[style];
+            var painted=ArsenalArt.Fusion(style);if(painted){sprites[style]=painted;return painted;}
             const int size=64;var texture=new Texture2D(size,size,TextureFormat.RGBA32,false){filterMode=FilterMode.Point,name="合体武器"+style};
             var pixels=new Color[size*size];Color steel=new Color(.73f,.78f,.82f),edge=new Color(.12f,.15f,.19f),bronze=new Color(.64f,.43f,.23f),leather=new Color(.29f,.2f,.15f);
             for(int y=0;y<size;y++)for(int x=0;x<size;x++) {

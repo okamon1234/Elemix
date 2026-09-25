@@ -60,6 +60,11 @@ namespace RogueSurvivors
                 var build = CharacterCatalog.CreateBuild(character.Id); stats.Restore(build);
                 Check(build.IsValid() && stats.CharacterId == character.Id && Mathf.Approximately(stats.MaxHealth, build.maxHealth), "Character starting build: " + character.Id);
             }
+            foreach(var character in CharacterCatalog.All) {
+                Check(ArsenalArt.Hero(character.Id) && ArsenalArt.Hero(character.Id,1) && ArsenalArt.Hero(character.Id,2),"Three painted character frames loaded: "+character.Id);
+            }
+            foreach(var weapon in WeaponCatalog.All) Check(ArsenalArt.Weapon(weapon.Id),"Painted weapon sprite loaded: "+weapon.Id);
+            for(int art=0;art<10;art++) Check(ArsenalArt.Fusion(art),"Painted fusion sprite loaded: "+art);
             Check(FindFirstObjectByType<MapObstacles>() && FindFirstObjectByType<MapObstacles>().GetComponentsInChildren<BoxCollider2D>().Length > 0, "Ruin obstacle chunks populate SoloScene");
             var baseline = new PlayerDataData(); baseline.weapons.Add(new WeaponSaveData("bolt", 1)); stats.Restore(baseline);
             var penaltyBuild = baseline.NetworkCopy(); penaltyBuild.level = 4; stats.Restore(penaltyBuild);
@@ -268,8 +273,27 @@ namespace RogueSurvivors
             float beforeBurn = statusVictim.Current; yield return new WaitForSeconds(2);
             Check(statusVictim.Current < beforeBurn, "Burning deals damage over time");
             statusVictim.Damage(10, Vector2.zero, player, CombatElement.Wood); statusVictim.Damage(10, Vector2.zero, player, CombatElement.Water);
-            float beforeBloom = statusVictim.Current; yield return new WaitForSeconds(.9f);
+            float beforeBloom = statusVictim.Current; yield return new WaitForSeconds(3.15f);
             Check(statusVictim.Current < beforeBloom, "Bloom detonates after a delay");
+            var seedState=statusVictim.GetComponent<ReactionDamage>();
+            foreach(var catalyst in new[]{CombatElement.Lightning,CombatElement.Fire}) {
+                yield return new WaitForSeconds(.8f);
+                statusVictim.GetComponent<ElementReaction>().Restore(0,0);
+                statusVictim.Damage(10,Vector2.zero,player,CombatElement.Water);
+                statusVictim.Damage(10,Vector2.zero,player,CombatElement.Wood);
+                Check(seedState.BloomStage==1,"Water then wood creates a persistent seed: "+catalyst);
+                statusVictim.Damage(10,Vector2.zero,player,catalyst);
+                Check(seedState.BloomStage==(catalyst==CombatElement.Lightning?2:3),"Third element consumes seed exactly once: "+catalyst);
+                Check(!seedState.TryCatalyze(catalyst,10,player),"Pending seed cannot be triggered again: "+catalyst);
+                float hp=statusVictim.Current;yield return new WaitForSeconds(.4f);
+                Check(Mathf.Abs(hp-statusVictim.Current-(catalyst==CombatElement.Lightning?22:15.5f))<.1f,"Chain reaction has bounded damage: "+catalyst);
+                Check(seedState.BloomStage==0,"Seed clears after chain impact: "+catalyst);
+            }
+            seedState.Begin(10,player,true);seedState.Begin(999,player,true);
+            Check(seedState.BloomDamage==10,"Seed stacking cannot overwrite damage or refresh the timer");
+            var seedSnapshot=seedState.CaptureBloom();seedState.RestoreBloom(Vector3.zero,null);seedState.RestoreBloom(seedSnapshot,player);
+            Check(seedState.BloomStage==1 && seedState.BloomOwner==player,"Seed state survives authority restoration");
+            seedState.RestoreBloom(Vector3.zero,null);
             yield return new WaitForSeconds(.45f);
             statusVictim.Damage(10, Vector2.zero, player, CombatElement.Lightning); statusVictim.Damage(10, Vector2.zero, player, CombatElement.Ice);
             float beforePhysical = statusVictim.Current; statusVictim.Damage(20, Vector2.zero, player);
@@ -284,6 +308,20 @@ namespace RogueSurvivors
             Check(ElementReaction.Recipe(CombatElement.Wind, CombatElement.Wood) == 0 && ElementReaction.Recipe(CombatElement.Wind, CombatElement.Earth) == 0 && ElementReaction.Recipe(CombatElement.Wind, CombatElement.Light) == 0 && ElementReaction.Recipe(CombatElement.Wind, CombatElement.Dark) == 0, "Wood earth light and dark do not swirl");
             Destroy(spreadVictim.gameObject);
             Destroy(statusVictim.gameObject); player.ResetHealth();
+            foreach(var starting in MageLoadout.Weapons) {
+                var mageBuild=CharacterCatalog.CreateBuild("mage",starting);stats.Restore(mageBuild);
+                Check(stats.StartingMageWeapon==starting && stats.Capture().weapons.Exists(w=>w.id==starting && w.level==2),"Mage starting element: "+starting);
+                var roundtrip=JsonUtility.FromJson<PlayerDataData>(JsonUtility.ToJson(stats.Capture().NetworkCopy()));
+                roundtrip.level=2;stats.Restore(roundtrip);stats.LoseRecentLevels(3);
+                Check(stats.StartingMageWeapon==starting && stats.Capture().weapons.Exists(w=>w.id==starting && w.level==2),"Mage saved initial equipment survives death rollback: "+starting);
+            }
+            for(int kind=0;kind<4;kind++) {
+                var a=BossAttackRoutes.Choose((BossKind)kind,2,0,1);
+                var b=BossAttackRoutes.Choose((BossKind)kind,2,0,2);
+                for(int part=0;part<4;part++)Check(BossAttackRoutes.Choose((BossKind)kind,2,0,part+1)!=BossAttackRoutes.Choose((BossKind)kind,3,0,part+1),"Third phase changes opening for each route: "+kind+"/"+part);
+                Check(a!=b,"First destroyed part changes boss strategy: "+kind);
+                Check(BossAttackRoutes.Choose((BossKind)kind,2,2,1|(2<<3))!=BossAttackRoutes.Choose((BossKind)kind,2,2,1|(3<<3)),"Later break order changes counterattack: "+kind);
+            }
             var maximumBuild = stats.Capture().NetworkCopy(); maximumBuild.weapons.Clear(); maximumBuild.physicalFusions=new List<string>{"greatsword","cycloneaxe","knifegloves","flail"};
             foreach (var definition in WeaponCatalog.All) maximumBuild.weapons.Add(new WeaponSaveData(definition.Id, 8));
             Check(maximumBuild.IsValid() && JsonUtility.ToJson(maximumBuild).Length <= 1536, "Expanded weapon save fits split Fusion network storage");
@@ -316,6 +354,7 @@ namespace RogueSurvivors
                 }
             }
             Check(armor.Exposed, "All four armor parts expose boss core");
+            Check(armor.BreakOrder==(1|(2<<3)|(3<<6)|(4<<9)),"Armor records exact break order without losing earlier parts");
             Check(boss.Phase==2,"Breaking remaining parts retains phase two until half HP");
             armoredHealth.Damage(1, Vector2.zero, player);
             Check(armoredHealth.Current == coreBefore - 1, "Exposed boss core takes damage");
@@ -343,7 +382,7 @@ namespace RogueSurvivors
             armoredHealth.Damage(100,Vector2.zero,player); armoredHealth.ReceiveSecondary(100,player);
             Check(armoredHealth.Current==transformedHealth, "Transformation blocks normal and reaction damage");
             yield return new WaitForSeconds(2.5f);
-            Check(boss.PendingAttack==BossAttack.SeismicRing && boss.State==BossState.Windup, "Third phase starts the moving seismic ring pattern");
+            Check(boss.PendingAttack==BossAttackRoutes.Choose(boss.Kind,3,0,armor.BreakOrder) && boss.State==BossState.Windup, "Third phase preserves the chosen break route");
             Check(GameObject.Find("East").transform.position.x==28 && GameObject.Find("North").transform.position.y==18, "Arena expands to 56 by 36 world units");
             player.GrantInvulnerability(50);
             for(int kind=0;kind<4;kind++) {

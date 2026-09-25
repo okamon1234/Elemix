@@ -49,7 +49,7 @@ namespace RogueSurvivors
         }
         public static PlayerDataData DefaultBuild()
         {
-            var build = CharacterCatalog.CreateBuild(GameManager.Instance ? GameManager.Instance.SelectedCharacter : "ranger");
+            var build = CharacterCatalog.CreateBuild(GameManager.Instance ? GameManager.Instance.SelectedCharacter : "ranger", MageLoadout.SelectedWeapon);
             build.level = 5; build.damageMultiplier += .4f; build.maxHealth += 40;
             foreach (var weapon in build.weapons) weapon.level = Mathf.Max(weapon.level, 3);
             return build;
