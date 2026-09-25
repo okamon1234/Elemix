@@ -1,7 +1,7 @@
 using UnityEngine;
 namespace RogueSurvivors
 {
-    public enum UpgradeKind { Bolt, Orbit, Power, Speed, Health, Pickup, Fireball, Lightning, Spear, Wind, Ice, Water, Light, Dark, Dagger, Axe, Hammer, Wood, Earth, Sword, Shield, Gauntlet, Scythe, Regeneration }
+    public enum UpgradeKind { Bolt, Orbit, Power, Speed, Health, Pickup, Fireball, Lightning, Spear, Wind, Ice, Water, Light, Dark, Dagger, Axe, Hammer, Wood, Earth, Sword, Shield, Gauntlet, Scythe, Regeneration, Whip, Crossbow, Boomerang }
     [System.Serializable]
     public sealed class UpgradeOption
     {

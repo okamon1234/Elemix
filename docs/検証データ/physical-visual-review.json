@@ -1,0 +1,16 @@
+{
+  "capturedFrames": 75,
+  "reviewedFrames": [
+    "合体と属性ガイド.png",
+    "Golem_2.png",
+    "合体_0_8.png",
+    "合体_5_8_後半.png",
+    "合体_2_8.png",
+    "合体_9_8.png",
+    "強化カード.png",
+    "杖_Wood_8.png"
+  ],
+  "resolution": "1280x720",
+  "runtimeExceptions": 0,
+  "shutdownNote": "終了時にComputeBufferの自動解放警告を記録。通常プレイの長時間検証は未実施。"
+}

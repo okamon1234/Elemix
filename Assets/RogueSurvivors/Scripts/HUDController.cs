@@ -52,7 +52,7 @@ namespace RogueSurvivors
                     (gm.Mode == RunMode.Boss && recovery ? "\n" + recovery.Status : "");
                 levelText.text = "レベル " + stats.Level + "   •   " + stats.Experience + " / " + stats.RequiredExperience + " XP";
                 var names = new System.Collections.Generic.List<string>();
-                foreach (var weapon in stats.GetComponents<WeaponBase>()) if (weapon.Level > 0) names.Add(PhysicalEvolution.Name(weapon) + " " + weapon.Level);
+                foreach (var weapon in stats.GetComponents<WeaponBase>()) if (weapon.Level > 0 && !PhysicalEvolution.IsPartner(weapon)) names.Add((PhysicalEvolution.Active(weapon)?"◆":"")+PhysicalEvolution.Name(weapon) + " " + PhysicalEvolution.DisplayLevel(weapon));
                 string weaponLines = names.Count > 3 ? string.Join("　｜　", names.GetRange(0, 3)) + "\n" + string.Join("　｜　", names.GetRange(3, names.Count - 3)) : string.Join("　｜　", names);
                 weapons.text = "武器 " + stats.WeaponCount + "/6（属性 " + stats.ElementWeaponCount + "/4）　" + weaponLines +
                     "\n攻撃倍率　" + stats.DamageMultiplier.ToString("0.0") + "x　　移動速度　" + stats.MoveSpeed.ToString("0.0");

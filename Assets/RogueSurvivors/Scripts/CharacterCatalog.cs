@@ -14,7 +14,7 @@ namespace RogueSurvivors
             new CharacterDefinition("ranger", "アーチャー", "初期武器：風の弓 Lv.2\n能力：移動速度＋0.6\n属性武器が出やすい", new Color(.25f, .85f, 1)),
             new CharacterDefinition("warden", "ウォリアー", "初期武器：回転剣 Lv.2\n能力：取得範囲＋0.8\n物理武器が出やすい", new Color(.75f, .55f, 1)),
             new CharacterDefinition("knight", "ナイト", "初期武器：剣・盾 Lv1\n5秒無傷で毎秒HP1回復\n被ダメージ10%減\n物理武器が出やすい", new Color(1, .65f, .3f)),
-            new CharacterDefinition("mage", "メイジ", "火の玉 レベル2\n攻撃力＋10%\n属性武器が出やすい", new Color(1, .55f, .25f)),
+            new CharacterDefinition("mage", "メイジ", "炎の玉 レベル2\n攻撃力＋10%\n属性武器が出やすい", new Color(1, .55f, .25f)),
             new CharacterDefinition("lancer", "ランサー", "槍 レベル2\n移動＋0.4／ダメージ5%減\n物理武器が出やすい", new Color(.55f, .8f, 1))
         };
         public static CharacterDefinition Find(string id)

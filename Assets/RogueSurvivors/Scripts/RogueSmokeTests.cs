@@ -53,6 +53,8 @@ namespace RogueSurvivors
         {
             var player = PlayerHealth.Local;
             Check(player && HUDController.Instance && GameManager.Instance.IsPlaying, "SoloScene bootstraps player, HUD and run state");
+            // ユーザーが選んだ短い準備時間で、検証中にシーンが切り替わることを防ぐ。設定保存は変更しない。
+            GameManager.Instance.soloDuration=1800;
             var stats = player.GetComponent<PlayerStats>();
             foreach (var character in CharacterCatalog.All) {
                 var build = CharacterCatalog.CreateBuild(character.Id); stats.Restore(build);
@@ -155,11 +157,11 @@ namespace RogueSurvivors
             }
             Destroy(targetA.gameObject); Destroy(targetB.gameObject);
             foreach (var projectile in FindObjectsByType<AreaProjectile>(FindObjectsSortMode.None)) Destroy(projectile.gameObject);
-            Check(JsonUtility.ToJson(stats.Capture().NetworkCopy()).Length <= 1024, "Build data fits Fusion network string capacity");
+            Check(JsonUtility.ToJson(stats.Capture().NetworkCopy()).Length <= 1536, "Build data fits Fusion network string capacity");
             var savedRoster = stats.Capture();
             int physicalCount = 0, elementalCount = 0;
             foreach (var definition in WeaponCatalog.All) { if (WeaponCatalog.IsPhysical(definition.Id)) physicalCount++; else elementalCount++; }
-            Check(physicalCount == 9 && elementalCount == 9, "Balanced roster: nine physical and nine elemental weapons");
+            Check(physicalCount == 12 && elementalCount == 9, "Roster: twelve physical weapons with nine elemental weapons");
             Check(WeaponCatalog.OfferWeight("knight", "sword") == 3 && WeaponCatalog.OfferWeight("knight", "water") == 1 && WeaponCatalog.OfferWeight("mage", "water") == 3 && WeaponCatalog.OfferWeight("ranger", "sword") == 1, "Melee and ranged classes bias weapon offers without excluding other builds");
             foreach (var definition in WeaponCatalog.All) {
                 var weapon = WeaponCatalog.Get(stats, definition.Kind);
@@ -177,9 +179,55 @@ namespace RogueSurvivors
                 WeaponBase primary = null, partner = null;
                 foreach (var weapon in player.GetComponents<WeaponBase>()) { if (weapon.Id == recipe.Weapon) primary = weapon; if (weapon.Id == recipe.Partner) partner = weapon; }
                 primary.SetLevel(4); partner.SetLevel(4);
-                Check(PhysicalEvolution.Name(primary) == recipe.Name && PhysicalEvolution.Power(primary) == 1.5f, "Physical combination evolves: " + recipe.Name);
+                Check(PhysicalEvolution.Name(primary)==recipe.Name && stats.WeaponCount==1 && PhysicalEvolution.IsPartner(partner) && !stats.CanAcquire(partner),"Two ingredients become one usable slot: "+recipe.Name);
+                primary.enabled=true;partner.enabled=true;
+                foreach(var shot in FindObjectsByType<PhysicalMissile>(FindObjectsSortMode.None))Destroy(shot.gameObject);
+                var fusionVictim=Instantiate(prefab,player.transform.position+Vector3.right*2,Quaternion.identity).GetComponent<EnemyHealth>();
+                fusionVictim.Scale(10000/fusionVictim.maximum);fusionVictim.GetComponent<EnemyAI>().enabled=false;
+                float fusionHP=fusionVictim.Current;
+                yield return new WaitForSeconds(1.2f);
+                Check(fusionVictim.Current<fusionHP,"Combined weapon has its own damaging attack: "+recipe.Name);
+                Check(WeaponCatalog.EstimateBossDps(partner)==0 && WeaponCatalog.EstimateBossDps(primary)>0,"Fusion is counted once in boss scaling: "+recipe.Name);
+                primary.enabled=false;partner.enabled=false;Destroy(fusionVictim.gameObject);
+                foreach(var pattern in FindObjectsByType<PhysicalAttackPattern>(FindObjectsSortMode.None))Destroy(pattern.gameObject);
+                foreach(var shot in FindObjectsByType<PhysicalMissile>(FindObjectsSortMode.None))Destroy(shot.gameObject);
+                foreach(var slash in FindObjectsByType<PhysicalSlash>(FindObjectsSortMode.None))Destroy(slash.gameObject);
                 partner.SetLevel(3); Check(!PhysicalEvolution.Active(primary), "Losing ingredient level removes evolution: " + recipe.Name);
             }
+            var mergeBuild=new PlayerDataData {level=10};
+            foreach(var pair in new[]{new WeaponSaveData("sword",4),new WeaponSaveData("shield",3),new WeaponSaveData("bolt",1),new WeaponSaveData("fireball",1),new WeaponSaveData("water",1),new WeaponSaveData("ice",1)})mergeBuild.weapons.Add(pair);
+            stats.Restore(mergeBuild);
+            stats.RecordUpgrade(UpgradeKind.Shield);new UpgradeOption(UpgradeKind.Shield,"","").Apply(stats);
+            Check(stats.WeaponCount==5 && stats.CanAcquire(stats.GetComponent<SpearWeapon>()),"Fusion at six slots frees one slot for a new weapon");
+            stats.RecordUpgrade(UpgradeKind.Spear);new UpgradeOption(UpgradeKind.Spear,"","").Apply(stats);
+            stats.RecordUpgrade(UpgradeKind.Sword);new UpgradeOption(UpgradeKind.Sword,"","").Apply(stats);
+            Check(stats.WeaponCount==6 && PhysicalEvolution.DisplayLevel(stats.GetComponent<SwordWeapon>())==2,"Fusion card upgrades combined weapon after refilling slot");
+            var fusionSave=JsonUtility.FromJson<PlayerDataData>(JsonUtility.ToJson(stats.Capture()));stats.Restore(fusionSave);
+            Check(fusionSave.IsValid() && stats.WeaponCount==6 && stats.FusionIds.Contains("greatsword"),"Fusion identity and material levels survive save round trip");
+            stats.LoseRecentLevels(3);
+            Check(stats.WeaponCount==6 && stats.FusionIds.Count==0 && stats.GetComponent<SwordWeapon>().Level==4 && stats.GetComponent<ShieldWeapon>().Level==3 && stats.GetComponent<SpearWeapon>().Level==0,"Three-upgrade rollback restores both ingredients and the previously full loadout");
+            foreach(var weapon in player.GetComponents<WeaponBase>())weapon.SetLevel(0);
+            stats.GetComponent<SwordWeapon>().SetLevel(4);stats.GetComponent<ShieldWeapon>().SetLevel(4);PhysicalEvolution.Refresh(stats);
+            stats.GetComponent<HammerWeapon>().SetLevel(4);PhysicalEvolution.Refresh(stats);
+            Check(stats.FusionIds.Count==1 && stats.FusionIds[0]=="greatsword" && !PhysicalEvolution.Active(stats.GetComponent<HammerWeapon>()),"A consumed ingredient cannot participate in a second fusion");
+            for(int i=0;i<7;i++)stats.GetComponent<SwordWeapon>().Upgrade();
+            Check(PhysicalEvolution.DisplayLevel(stats.GetComponent<SwordWeapon>())==8,"Combined weapon upgrades to its own level eight cap");
+            foreach(var definition in WeaponCatalog.All) if(WeaponCatalog.IsPhysical(definition.Id)) {
+                bool hasRecipe=false;foreach(var recipe in PhysicalEvolution.Recipes)hasRecipe|=recipe.Weapon==definition.Id||recipe.Partner==definition.Id;
+                Check(hasRecipe,"Every physical weapon has a fusion path: "+definition.Id);
+            }
+            var fiveBuild=new PlayerDataData {level=41};
+            foreach(var recipeId in new[]{"greatsword","cycloneaxe","knifegloves","flail","chainscythe"}) {
+                var recipe=PhysicalEvolution.ById(recipeId);fiveBuild.weapons.Add(new WeaponSaveData(recipe.Weapon,4));fiveBuild.weapons.Add(new WeaponSaveData(recipe.Partner,4));fiveBuild.physicalFusions.Add(recipe.Id);
+            }
+            fiveBuild.weapons.Add(new WeaponSaveData("crossbow",1));stats.Restore(fiveBuild);
+            Check(stats.FusionIds.Count==5 && stats.WeaponCount==6 && !stats.CanAcquire(stats.GetComponent<BoomerangWeapon>()),"Five distinct fusions plus one normal weapon fill six slots");
+            Check(stats.Capture().IsValid() && JsonUtility.ToJson(stats.Capture().NetworkCopy()).Length<=1536,"Five-fusion loadout survives validation and fits network capacity");
+            foreach(var weapon in player.GetComponents<WeaponBase>())weapon.enabled=false;
+            var noDamageVictim=Instantiate(prefab,player.transform.position+Vector3.right*2,Quaternion.identity).GetComponent<EnemyHealth>();noDamageVictim.GetComponent<EnemyAI>().enabled=false;float noDamageHP=noDamageVictim.Current;
+            PhysicalAttackPattern.Create(2,player.transform.position,noDamageVictim.transform.position,4,0,null);
+            yield return new WaitForSeconds(.7f);
+            Check(noDamageVictim.Current==noDamageHP,"Replicated physical weapon visuals never apply damage");Destroy(noDamageVictim.gameObject);
             foreach (var weapon in player.GetComponents<WeaponBase>()) weapon.SetLevel(0);
             stats.GetComponent<ProjectileWeapon>().SetLevel(1); stats.GetComponent<FireballWeapon>().SetLevel(1); stats.GetComponent<WaterWeapon>().SetLevel(1); stats.GetComponent<IceWeapon>().SetLevel(1);
             Check(stats.ElementWeaponCount == 4 && !stats.CanAcquire(stats.GetComponent<DarkWeapon>()) && stats.CanAcquire(stats.GetComponent<SwordWeapon>()) && stats.CanAcquire(stats.GetComponent<WaterWeapon>()), "Four-element cap permits physical additions and owned-weapon upgrades");
@@ -236,9 +284,9 @@ namespace RogueSurvivors
             Check(ElementReaction.Recipe(CombatElement.Wind, CombatElement.Wood) == 0 && ElementReaction.Recipe(CombatElement.Wind, CombatElement.Earth) == 0 && ElementReaction.Recipe(CombatElement.Wind, CombatElement.Light) == 0 && ElementReaction.Recipe(CombatElement.Wind, CombatElement.Dark) == 0, "Wood earth light and dark do not swirl");
             Destroy(spreadVictim.gameObject);
             Destroy(statusVictim.gameObject); player.ResetHealth();
-            var maximumBuild = stats.Capture().NetworkCopy(); maximumBuild.weapons.Clear();
+            var maximumBuild = stats.Capture().NetworkCopy(); maximumBuild.weapons.Clear(); maximumBuild.physicalFusions=new List<string>{"greatsword","cycloneaxe","knifegloves","flail"};
             foreach (var definition in WeaponCatalog.All) maximumBuild.weapons.Add(new WeaponSaveData(definition.Id, 8));
-            Check(maximumBuild.IsValid() && JsonUtility.ToJson(maximumBuild).Length <= 1024, "Expanded weapon save fits split Fusion network storage");
+            Check(maximumBuild.IsValid() && JsonUtility.ToJson(maximumBuild).Length <= 1536, "Expanded weapon save fits split Fusion network storage");
             previousSave = File.Exists(BuildSaveService.PathName) ? File.ReadAllBytes(BuildSaveService.PathName) : null;
             previousBackup = File.Exists(BuildSaveService.PathName + ".bak") ? File.ReadAllBytes(BuildSaveService.PathName + ".bak") : null;
             saveTouched = true;
@@ -410,4 +458,3 @@ namespace RogueSurvivors
     }
 }
 #endif
-

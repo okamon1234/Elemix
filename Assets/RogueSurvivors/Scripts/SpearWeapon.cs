@@ -5,7 +5,7 @@ namespace RogueSurvivors
     public sealed class SpearWeapon : WeaponBase
     {
         public override string Id => "spear";
-        protected override float Interval => Mathf.Max(.45f, 1.1f - Level * .08f);
+        protected override float Interval => Mathf.Max(.45f, 1f - Level * .08f);
         protected override bool Attack()
         {
             var target = GetComponent<AutoTargeting>().FindNearest(); if (!target) return false;
@@ -15,7 +15,7 @@ namespace RogueSurvivors
             foreach (var enemy in new List<EnemyHealth>(EnemyHealth.Active)) {
                 if (!enemy || !enemy.Alive) continue;
                 Vector2 offset = (Vector2)enemy.transform.position - origin;
-                float along = Vector2.Dot(offset, heading), width = enemy.IsBoss ? 1.4f : .7f;
+                float along = Vector2.Dot(offset, heading), width = enemy.IsBoss ? 1.4f : .9f;
                 if (along >= 0 && along <= reach + (enemy.IsBoss ? 1 : 0) && (offset - heading * along).sqrMagnitude < width * width)
                 {
                     enemy.Damage((17 + Level * 7) * Stats.DamageMultiplier * PhysicalEvolution.Power(this), heading, Health);

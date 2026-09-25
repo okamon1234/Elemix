@@ -6,6 +6,7 @@ namespace RogueSurvivors
     public sealed class Bullet : MonoBehaviour
     {
         readonly HashSet<int> hit = new HashSet<int>();
+        public BulletVolley Volley {get;set;}
         Vector2 direction;
         float damage, speed, expires;
         int pierce;
@@ -40,7 +41,7 @@ namespace RogueSurvivors
             {
                 var enemy = other.GetComponent<EnemyHealth>();
                 if (!enemy || !enemy.Alive || !hit.Add(enemy.GetInstanceID())) return;
-                if (!cosmetic) enemy.Damage(damage, direction, owner, CombatElement.Wind);
+                if (!cosmetic) enemy.Damage(damage*(enemy.IsBoss && Volley!=null?Volley.Multiplier(enemy):1), direction, owner, CombatElement.Wind);
                 if (pierce-- <= 0) Destroy(gameObject);
             }
         }

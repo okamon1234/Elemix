@@ -11,7 +11,7 @@ namespace RogueSurvivors
     // 実際の敵生成・物理・ドロップ・3択を通す、再現可能な自動プレイ比較。
     public sealed class CombatBalanceProbe : MonoBehaviour
     {
-        [Serializable] public sealed class Row { public string character; public int seed, level, kills, deaths, experience; public float seconds; }
+        [Serializable] public sealed class Row { public string character,finalWeapons; public int seed, level, kills, deaths, experience; public float seconds; public List<string> deathEvents=new List<string>(); }
         [Serializable] sealed class Report { public List<Row> runs = new List<Row>(); public string error; }
         readonly Report report = new Report();
         PlayerHealth player; PlayerStats stats; Rigidbody2D body; LevelUpManager levels;
@@ -22,7 +22,9 @@ namespace RogueSurvivors
         void Log(string message, string trace, LogType type) { if (type == LogType.Error || type == LogType.Exception) report.error = message+"\n"+trace; }
         IEnumerator Start()
         {
-            foreach (int seed in new[] { 12345, 54321 }) foreach (string character in new[] { "ranger", "warden", "knight", "lancer" }) {
+            var args=Environment.GetCommandLineArgs();int filter=Array.IndexOf(args,"--rogue-balance-character");
+            string[] characters=filter>=0&&filter+1<args.Length?new[]{CharacterCatalog.Find(args[filter+1]).Id}:new[]{"ranger","warden","knight","lancer"};
+            foreach (int seed in new[] { 12345, 54321 }) foreach (string character in characters) {
                 Time.timeScale=1; UnityEngine.Random.InitState(seed); SceneManager.LoadScene("SoloScene");
                 yield return null; yield return null;
                 player=PlayerHealth.Local; stats=player.GetComponent<PlayerStats>(); stats.Restore(CharacterCatalog.CreateBuild(character));
@@ -31,14 +33,15 @@ namespace RogueSurvivors
                 row=new Row { character=character, seed=seed }; player.Died+=CountDeath;
                 Time.maximumDeltaTime=.2f;
                 while (GameManager.Instance.Elapsed<120 && string.IsNullOrEmpty(report.error)) { Time.timeScale=GameManager.Instance.ChoosingUpgrade ? 0 : 6; yield return null; }
-                row.level=stats.Level; row.experience=stats.Experience; row.kills=GameManager.Instance.Kills; row.seconds=GameManager.Instance.Elapsed;
+                row.level=stats.Level; row.experience=stats.Experience; row.kills=GameManager.Instance.Kills; row.seconds=GameManager.Instance.Elapsed;row.finalWeapons=DescribeWeapons();
                 player.Died-=CountDeath; report.runs.Add(row); row=null;
                 File.WriteAllText("Logs/RogueBalanceResult.json",JsonUtility.ToJson(report,true));
                 if (!string.IsNullOrEmpty(report.error)) break;
             }
             Restore(); UnityEditor.EditorApplication.isPlaying=false;
         }
-        void CountDeath() { if(row!=null) row.deaths++; }
+        string DescribeWeapons() {string text="";foreach(var w in stats.Weapons)if(w.Level>0&&!PhysicalEvolution.IsPartner(w))text+=(text.Length>0?" / ":"")+PhysicalEvolution.Name(w)+" Lv"+PhysicalEvolution.DisplayLevel(w);return text;}
+        void CountDeath() { if(row!=null) {row.deaths++;row.deathEvents.Add(GameManager.Instance.Elapsed.ToString("F1")+"秒・死亡処理後Lv"+stats.Level+"・"+DescribeWeapons());} }
         void Update()
         {
             if (!levels || row==null) return;
@@ -47,6 +50,12 @@ namespace RogueSurvivors
             for(int i=0;i<list.Count;i++) {
                 var w=WeaponCatalog.Get(stats,list[i].Kind);
                 float score=w ? (WeaponCatalog.IsPhysical(w.Id)==physical?20:0)+(w.Level>0?10:0)-w.Level*.1f : list[i].Kind==UpgradeKind.Power?15:list[i].Kind==UpgradeKind.Regeneration?8:3;
+                // 物理は素材をLv4で合わせて合体を狙う。単独Lv8への偏りで合体の価値を測り損ねない。
+                if(w && physical && WeaponCatalog.IsPhysical(w.Id)) {
+                    score=20+(w.Level>0?5:0)-PhysicalEvolution.DisplayLevel(w)*.1f;
+                    if(PhysicalEvolution.Active(w))score+=8;
+                    else if(PhysicalEvolution.PartnerWeight(stats,w.Id)>1)score+=w.Level<4?14:2;
+                }
                 if(score>best) { best=score; choice=i; }
             }
             levels.Choose(choice);
@@ -61,7 +70,7 @@ namespace RogueSurvivors
             if(nearest) direction=((Vector2)nearest.transform.position-origin).normalized;
             else {
                 var enemy=player.GetComponent<AutoTargeting>().FindNearest();
-                if(enemy) { Vector2 delta=(Vector2)enemy.transform.position-origin; float desired=physical?1.45f:3.5f; direction=delta.magnitude>desired?delta.normalized:delta.magnitude<desired-.5f?-delta.normalized:new Vector2(-delta.y,delta.x).normalized; }
+                if(enemy) { Vector2 delta=(Vector2)enemy.transform.position-origin; float desired=physical?(stats.CharacterId=="lancer"?2.7f:2.1f):3.5f; direction=delta.magnitude>desired?delta.normalized:delta.magnitude<desired-.5f?-delta.normalized:new Vector2(-delta.y,delta.x).normalized; }
             }
             body.linearVelocity=ObstacleAvoidance.Steer(origin,direction,.35f,1)*stats.MoveSpeed;
         }

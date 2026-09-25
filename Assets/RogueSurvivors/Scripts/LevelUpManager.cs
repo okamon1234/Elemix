@@ -30,7 +30,7 @@ namespace RogueSurvivors
             var pool = new List<UpgradeOption>();
             foreach (var definition in WeaponCatalog.All) {
                 var weapon = WeaponCatalog.Get(stats, definition.Kind);
-                if (weapon && weapon.Level < 8 && stats.CanAcquire(weapon)) pool.Add(new UpgradeOption(definition.Kind, PhysicalEvolution.Name(weapon) + " Lv." + weapon.Level + " → " + (weapon.Level+1), WeaponCatalog.UpgradeDescription(weapon) + PhysicalEvolution.Hint(definition.Id)));
+                if (weapon && PhysicalEvolution.DisplayLevel(weapon) < 8 && stats.CanAcquire(weapon)) pool.Add(new UpgradeOption(definition.Kind, PhysicalEvolution.Name(weapon) + " Lv." + PhysicalEvolution.DisplayLevel(weapon) + " → " + (PhysicalEvolution.DisplayLevel(weapon)+1), WeaponCatalog.UpgradeDescription(weapon) + (PhysicalEvolution.Active(weapon)?"\n合体武器は1枠／素材の通常攻撃は停止":PhysicalEvolution.Hint(definition.Id))));
             }
             pool.Add(new UpgradeOption(UpgradeKind.Power, "攻撃力アップ", "攻撃力を基礎値の20%分強化\nすべての武器に有効"));
             pool.Add(new UpgradeOption(UpgradeKind.Speed, "移動速度アップ", "移動速度＋0.4\n敵の群れから抜け出しやすくなる"));

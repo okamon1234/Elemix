@@ -44,12 +44,14 @@ namespace RogueSurvivors
 #if ROGUE_FUSION
         [Networked] public NetworkString<_512> BuildJson { get; set; }
         [Networked] public NetworkString<_512> BuildTail { get; set; }
-        string ReadBuild() => BuildJson.ToString() + BuildTail.ToString();
+        [Networked] public NetworkString<_512> BuildExtra { get; set; }
+        string ReadBuild() => BuildJson.ToString() + BuildTail.ToString() + BuildExtra.ToString();
         void WriteBuild(string json)
         {
-            if (json.Length > 1024) throw new System.InvalidOperationException("Build exceeds network capacity");
+            if (json.Length > 1536) throw new System.InvalidOperationException("Build exceeds network capacity");
             BuildJson = json.Substring(0, Mathf.Min(512, json.Length));
-            BuildTail = json.Length > 512 ? json.Substring(512) : "";
+            BuildTail = json.Length > 512 ? json.Substring(512, Mathf.Min(512,json.Length-512)) : "";
+            BuildExtra = json.Length > 1024 ? json.Substring(1024) : "";
         }
         [Networked] public NetworkBool BarrierValue { get; set; }
         [Networked] public float HealthValue { get; set; }
@@ -116,6 +118,7 @@ namespace RogueSurvivors
         [Rpc(RpcSources.StateAuthority, RpcTargets.All, InvokeLocal = false)]
         void RPC_WeaponEffect(int kind, Vector2 start, Vector2 end)
         {
+            if(kind>=2000 && kind<2260) {int code=kind-2000;PhysicalAttackPattern.Create(code/10,start,end,code%10,0,GetComponent<PlayerHealth>());return;}
             if (kind >= 1000 && kind < 2000) { int code=kind-1000; StaffCast.Create((CombatElement)(code/100),start,end,(code%100)/2,0,null,(code%2)==1); return; }
             if (kind == 0) GetComponent<FireballWeapon>()?.SpawnAt(start, (end - start).normalized, true);
             if (kind == 1) CombatVisuals.Lightning(start, end);

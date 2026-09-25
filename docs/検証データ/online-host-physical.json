@@ -1,0 +1,21 @@
+{
+    "success": true,
+    "role": "host",
+    "checks": [
+        "Fusion Shared cloud connection",
+        "Two independent clients joined the same private room",
+        "Synchronized arena load and player/boss spawns",
+        "Remote player movement replicated",
+        "Two ingredients replicated as a single fused weapon",
+        "Boss difficulty uses both player builds",
+        "Host selected dragon overrides guest boss selection",
+        "First broken part triggers phase two while core remains full",
+        "Four directional parts broken by guest and replicated; core protected until exposed",
+        "Guest attack reached boss authority and HP replicated",
+        "Authority enters dragon third phase",
+        "Third phase changes boss attack pattern",
+        "Victory state replicated and result displayed",
+        "Runner shutdown and return to home"
+    ],
+    "error": ""
+}

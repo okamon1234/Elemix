@@ -26,6 +26,8 @@ namespace RogueSurvivors
             SaveFrame(Path.Combine(folder,"ホーム.png"));
             FindFirstObjectByType<BossGuideUI>().Open(); yield return new WaitForSecondsRealtime(.2f);
             SaveFrame(Path.Combine(folder,"ボス攻略.png"));
+            FindFirstObjectByType<BuildGuideUI>().Open(); yield return new WaitForSecondsRealtime(.2f);
+            SaveFrame(Path.Combine(folder,"合体と属性ガイド.png"));
             SceneManager.LoadScene("MultiBossScene");
             yield return null; yield return null; yield return null;
             var player=PlayerHealth.Local; var boss=FindFirstObjectByType<BossAI>();
@@ -64,7 +66,7 @@ namespace RogueSurvivors
                     foreach(var fx in FindObjectsByType<CombatFx>(FindObjectsSortMode.None)) Destroy(fx.gameObject);
                     foreach(var mote in FindObjectsByType<CombatMote>(FindObjectsSortMode.None)) Destroy(mote.gameObject);
                     StaffCast.Create(element,player.transform.position,Vector2.zero,level,0,null,level>=4 && (element==CombatElement.Light || element==CombatElement.Dark));
-                    HUDController.Instance.Toast((element==CombatElement.Ice?"氷":element==CombatElement.Water?"水":element==CombatElement.Wood?"木":element==CombatElement.Earth?"土":element==CombatElement.Light?"光":"闇")+"の杖 Lv."+level);
+                    HUDController.Instance.Toast((element==CombatElement.Ice?"氷の槍":element==CombatElement.Water?"水のオーブ":element==CombatElement.Wood?"木の種":element==CombatElement.Earth?"土のハンマー":element==CombatElement.Light?"光の槍":"闇のオーブ")+" Lv."+level);
                     yield return new WaitForSecondsRealtime(.28f);
                     SaveFrame(Path.Combine(folder,"杖_"+element+"_"+level+".png"));
                 }
@@ -72,13 +74,18 @@ namespace RogueSurvivors
             foreach(var cast in FindObjectsByType<StaffCast>(FindObjectsSortMode.None)) Destroy(cast.gameObject);
             foreach(var fx in FindObjectsByType<CombatFx>(FindObjectsSortMode.None)) Destroy(fx.gameObject);
             foreach(var mote in FindObjectsByType<CombatMote>(FindObjectsSortMode.None)) Destroy(mote.gameObject);
-            for(int weapon=0;weapon<8;weapon++) {
-                WeaponSwingVisual.Create(weapon,player.transform.position,(Vector2)player.transform.position+new Vector2(2,1));
-                HUDController.Instance.Toast("物理武器の振り抜き "+weapon);
-                yield return new WaitForSecondsRealtime(.1f);
-                SaveFrame(Path.Combine(folder,"物理_"+weapon+".png"));
-                yield return new WaitForSecondsRealtime(.4f);
+            for(int weapon=0;weapon<10;weapon++) foreach(int level in new[]{1,8}) {
+                foreach(var shot in FindObjectsByType<PhysicalMissile>(FindObjectsSortMode.None))Destroy(shot.gameObject);
+                foreach(var slash in FindObjectsByType<PhysicalSlash>(FindObjectsSortMode.None))Destroy(slash.gameObject);
+                PhysicalAttackPattern.Create(weapon,player.transform.position,(Vector2)player.transform.position+Vector2.right*4,level,0,player);
+                HUDController.Instance.Toast(PhysicalEvolution.Recipes[weapon].Name+" Lv."+level);
+                yield return new WaitForSecondsRealtime(.2f);
+                SaveFrame(Path.Combine(folder,"合体_"+weapon+"_"+level+".png"));
+                yield return new WaitForSecondsRealtime(.3f);
+                SaveFrame(Path.Combine(folder,"合体_"+weapon+"_"+level+"_後半.png"));
+                yield return new WaitForSecondsRealtime(1.5f);
             }
+            foreach(var shot in FindObjectsByType<PhysicalMissile>(FindObjectsSortMode.None))Destroy(shot.gameObject);
             for(int reaction=2;reaction<=13;reaction++) {
                 Vector2 point=new Vector2((reaction-2)%4*3-4.5f,(reaction-2)/4*3-6);
                 CombatFx.Reaction(reaction,CombatElement.Fire,point);
@@ -86,7 +93,15 @@ namespace RogueSurvivors
             player.GrantBarrier(); HUDController.Instance.Toast("属性反応と一撃防御の結晶バリア");
             yield return new WaitForSecondsRealtime(.1f);
             SaveFrame(Path.Combine(folder,"属性反応とバリア.png"));
-            File.WriteAllText(Path.Combine(folder,"描画完了.txt"),"Home, guide, four bosses / three phases, six staffs / three levels, reactions and crystal barrier rendered at 1280x720.");
+            var options=new System.Collections.Generic.List<UpgradeOption>();
+            foreach(var id in new[]{"hammer","wood","crossbow"}) {
+                var weapon=PhysicalEvolution.Weapon(player.GetComponent<PlayerStats>(),id);weapon.SetLevel(0);
+                options.Add(new UpgradeOption(WeaponCatalog.Find(id).Kind,WeaponCatalog.Find(id).Name+" Lv.0 → 1",WeaponCatalog.UpgradeDescription(weapon)+PhysicalEvolution.Hint(id)));
+            }
+            HUDController.Instance.LevelUI.Show(options,_=>{},20);
+            yield return new WaitForSecondsRealtime(.1f);
+            SaveFrame(Path.Combine(folder,"強化カード.png"));
+            File.WriteAllText(Path.Combine(folder,"描画完了.txt"),"ホーム・攻略・合体ガイド・4ボス3形態・属性攻撃・10合体2レベル2時点・反応・結晶・強化カードを1280×720で描画。");
             Application.Quit();
         }
         static void SaveFrame(string path)

@@ -1,0 +1,114 @@
+{
+    "runs": [
+        {
+            "character": "ranger",
+            "finalWeapons": "風の弓 Lv8 / 闇のオーブ Lv8",
+            "seed": 12345,
+            "level": 15,
+            "kills": 360,
+            "deaths": 3,
+            "experience": 13,
+            "seconds": 120.00426483154297,
+            "deathEvents": [
+                "79.6秒・死亡処理後Lv10・風の弓 Lv8 / 闇のオーブ Lv3",
+                "95.1秒・死亡処理後Lv10・風の弓 Lv8 / 闇のオーブ Lv3",
+                "110.0秒・死亡処理後Lv11・風の弓 Lv8 / 闇のオーブ Lv4"
+            ]
+        },
+        {
+            "character": "warden",
+            "finalWeapons": "回転大斧 Lv1 / 鎖鎌 Lv1",
+            "seed": 12345,
+            "level": 15,
+            "kills": 337,
+            "deaths": 3,
+            "experience": 36,
+            "seconds": 120.00344848632813,
+            "deathEvents": [
+                "72.5秒・死亡処理後Lv9・回転剣 Lv4 / 斧 Lv3 / 鎌 Lv3",
+                "98.3秒・死亡処理後Lv10・回転剣 Lv4 / 斧 Lv3 / 鎌 Lv3 / 鞭 Lv1",
+                "113.1秒・死亡処理後Lv13・回転大斧 Lv1 / 鎌 Lv3 / 鞭 Lv3"
+            ]
+        },
+        {
+            "character": "knight",
+            "finalWeapons": "回転剣 Lv1 / 槍 Lv1 / 投擲戦斧 Lv1 / 大剣 Lv2",
+            "seed": 12345,
+            "level": 18,
+            "kills": 361,
+            "deaths": 1,
+            "experience": 68,
+            "seconds": 120.00115203857422,
+            "deathEvents": [
+                "112.9秒・死亡処理後Lv17・回転剣 Lv1 / 槍 Lv1 / 斧 Lv3 / ハンマー Lv4 / 大剣 Lv2"
+            ]
+        },
+        {
+            "character": "lancer",
+            "finalWeapons": "ハルバード Lv4",
+            "seed": 12345,
+            "level": 10,
+            "kills": 284,
+            "deaths": 4,
+            "experience": 0,
+            "seconds": 120.00165557861328,
+            "deathEvents": [
+                "70.4秒・死亡処理後Lv9・ハルバード Lv3",
+                "96.3秒・死亡処理後Lv9・ハルバード Lv3",
+                "105.7秒・死亡処理後Lv10・ハルバード Lv4",
+                "116.9秒・死亡処理後Lv10・ハルバード Lv4"
+            ]
+        },
+        {
+            "character": "ranger",
+            "finalWeapons": "風の弓 Lv8 / 雷の指輪 Lv8 / 闇のオーブ Lv6",
+            "seed": 54321,
+            "level": 22,
+            "kills": 377,
+            "deaths": 0,
+            "experience": 34,
+            "seconds": 120.00152587890625,
+            "deathEvents": []
+        },
+        {
+            "character": "warden",
+            "finalWeapons": "回転大斧 Lv7 / 鎌 Lv6",
+            "seed": 54321,
+            "level": 19,
+            "kills": 364,
+            "deaths": 1,
+            "experience": 93,
+            "seconds": 120.00291442871094,
+            "deathEvents": [
+                "103.7秒・死亡処理後Lv16・回転大斧 Lv4 / 鎌 Lv6"
+            ]
+        },
+        {
+            "character": "knight",
+            "finalWeapons": "槍 Lv5 / 斧 Lv1 / ハンマー Lv3 / 大剣 Lv7",
+            "seed": 54321,
+            "level": 22,
+            "kills": 355,
+            "deaths": 0,
+            "experience": 43,
+            "seconds": 120.00163269042969,
+            "deathEvents": []
+        },
+        {
+            "character": "lancer",
+            "finalWeapons": "ハルバード Lv8",
+            "seed": 54321,
+            "level": 14,
+            "kills": 368,
+            "deaths": 3,
+            "experience": 63,
+            "seconds": 120.00146484375,
+            "deathEvents": [
+                "90.9秒・死亡処理後Lv12・ハルバード Lv6",
+                "101.2秒・死亡処理後Lv11・ハルバード Lv5",
+                "109.9秒・死亡処理後Lv9・ハルバード Lv3"
+            ]
+        }
+    ],
+    "error": ""
+}

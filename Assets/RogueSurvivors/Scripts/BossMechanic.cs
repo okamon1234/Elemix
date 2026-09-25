@@ -36,6 +36,7 @@ namespace RogueSurvivors
         float Angle(float progress) => baseAngle-(attack==BossAttack.HammerSweep?65:40)+progress*(attack==BossAttack.ThornSpiral?210:attack==BossAttack.HammerSweep?130:110)*(phase>=3?1.15f:1);
         float Length => attack==BossAttack.SweepingBreath?17:attack==BossAttack.ThornSpiral?13:10;
         float GapAngle => baseAngle+90;
+        public bool Threatens(Vector2 point,float lookAhead=.3f) => age+lookAhead>=delay && Contains(point,Mathf.Clamp01((age+lookAhead-delay)/duration));
         public bool Contains(Vector2 point,float progress)
         {
             Vector2 delta=point-center;

@@ -100,7 +100,7 @@ namespace RogueSurvivors
                 Runner = runnerGO.AddComponent<NetworkRunner>();
                 var sceneManager = runnerGO.AddComponent<NetworkSceneManagerDefault>();
                 var appSettings = PhotonAppSettings.Global.AppSettings.GetCopy();
-                if (!string.IsNullOrWhiteSpace(FusionAppId)) appSettings.AppIdFusion = FusionAppId; appSettings.AppVersion = "Elemix-Fusion2-v4-combat";
+                if (!string.IsNullOrWhiteSpace(FusionAppId)) appSettings.AppIdFusion = FusionAppId; appSettings.AppVersion = "Elemix-Fusion2-v5-physical-fusion";
                 appSettings.FixedRegion = "jp"; appSettings.UseNameServer = true;
                 int lobbyIndex = SceneUtility.GetBuildIndexByScenePath("Assets/RogueSurvivors/Scenes/LobbyScene.unity");
                 if (lobbyIndex < 0) throw new InvalidOperationException("LobbySceneがビルド対象に登録されていません。");
@@ -168,4 +168,3 @@ namespace RogueSurvivors
         void OnDestroy() { if (Instance == this) Instance = null; }
     }
 }
-

@@ -14,15 +14,20 @@ namespace RogueSurvivors
         public void SetLevel(int value) { level = Mathf.Clamp(value, 0, 8); nextAttack = 0; }
         public void Upgrade()
         {
-            var before = new HashSet<string>();
-            foreach (var weapon in GetComponents<WeaponBase>()) if (PhysicalEvolution.Active(weapon) || ElementEvolution.Active(weapon)) before.Add(weapon.Id);
-            SetLevel(level + 1);
-            foreach (var weapon in GetComponents<WeaponBase>()) if ((PhysicalEvolution.Active(weapon) || ElementEvolution.Active(weapon)) && !before.Contains(weapon.Id))
-                HUDController.Instance?.Toast("武器進化！　" + (ElementEvolution.Active(weapon)?ElementEvolution.Name(weapon):PhysicalEvolution.Name(weapon)));
+            var before=new HashSet<string>(Stats.FusionIds);
+            bool elementalBefore=ElementEvolution.Active(this);
+            if(!PhysicalEvolution.UpgradeFusion(this)) SetLevel(level+1);
+            PhysicalEvolution.Refresh(Stats);
+            foreach(var id in Stats.FusionIds) if(!before.Contains(id)) {
+                HUDController.Instance?.Toast("合体！　"+PhysicalEvolution.ById(id).Name+" ／ 武器枠が1つ空いた！");
+                FusionAssemblyFx.Show(Stats,PhysicalEvolution.ById(id));
+                EffectsService.Instance?.Play("Level");
+            }
+            if(!elementalBefore && ElementEvolution.Active(this)) HUDController.Instance?.Toast("武器進化！　"+ElementEvolution.Name(this));
         }
         protected virtual void Update()
         {
-            if (level == 0 || !Health.Alive || !Health.IsLocal || Time.timeScale == 0) return;
+            if (PhysicalEvolution.Active(this) || level == 0 || !Health.Alive || !Health.IsLocal || Time.timeScale == 0) return;
             if (GameManager.Instance && !GameManager.Instance.IsPlaying) return;
             if (Time.time >= nextAttack && Attack()) nextAttack = Time.time + Interval;
         }

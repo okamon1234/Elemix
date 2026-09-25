@@ -1,0 +1,33 @@
+{
+    "runs": [
+        {
+            "character": "lancer",
+            "finalWeapons": "短剣 Lv1 / 鎖鉄球 Lv8 / ナックル Lv2",
+            "seed": 12345,
+            "level": 17,
+            "kills": 361,
+            "deaths": 3,
+            "experience": 25,
+            "seconds": 120.00401306152344,
+            "deathEvents": [
+                "72.3秒・死亡処理後Lv10・鎖鉄球 Lv4",
+                "94.9秒・死亡処理後Lv12・鎖鉄球 Lv6",
+                "105.2秒・死亡処理後Lv10・鎖鉄球 Lv4"
+            ]
+        },
+        {
+            "character": "lancer",
+            "finalWeapons": "鎖鉄球 Lv5 / 大剣 Lv3",
+            "seed": 54321,
+            "level": 21,
+            "kills": 372,
+            "deaths": 1,
+            "experience": 19,
+            "seconds": 120.00267028808594,
+            "deathEvents": [
+                "106.4秒・死亡処理後Lv16・鎖鉄球 Lv4 / 剣 Lv3 / 盾 Lv3"
+            ]
+        }
+    ],
+    "error": ""
+}

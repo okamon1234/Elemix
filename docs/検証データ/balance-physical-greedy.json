@@ -1,0 +1,107 @@
+{
+    "runs": [
+        {
+            "character": "ranger",
+            "finalWeapons": "風の弓 Lv8 / 氷の槍 Lv8 / 水のオーブ Lv5",
+            "seed": 12345,
+            "level": 20,
+            "kills": 362,
+            "deaths": 0,
+            "experience": 102,
+            "seconds": 120.00067138671875,
+            "deathEvents": []
+        },
+        {
+            "character": "warden",
+            "finalWeapons": "回転大斧 Lv8 / 槍 Lv2",
+            "seed": 12345,
+            "level": 16,
+            "kills": 353,
+            "deaths": 2,
+            "experience": 0,
+            "seconds": 120.00142669677735,
+            "deathEvents": [
+                "102.8秒・死亡処理後Lv15・回転大斧 Lv8 / 槍 Lv1",
+                "118.5秒・死亡処理後Lv16・回転大斧 Lv8 / 槍 Lv2"
+            ]
+        },
+        {
+            "character": "knight",
+            "finalWeapons": "大剣 Lv8 / ボウガン Lv6",
+            "seed": 12345,
+            "level": 20,
+            "kills": 355,
+            "deaths": 1,
+            "experience": 58,
+            "seconds": 120.03752136230469,
+            "deathEvents": [
+                "74.5秒・死亡処理後Lv9・大剣 Lv3"
+            ]
+        },
+        {
+            "character": "lancer",
+            "finalWeapons": "槍 Lv8 / ナックル Lv7",
+            "seed": 12345,
+            "level": 14,
+            "kills": 292,
+            "deaths": 2,
+            "experience": 0,
+            "seconds": 120.00102233886719,
+            "deathEvents": [
+                "107.5秒・死亡処理後Lv16・槍 Lv8 / 短剣 Lv1 / ナックル Lv8",
+                "116.8秒・死亡処理後Lv14・槍 Lv8 / ナックル Lv7"
+            ]
+        },
+        {
+            "character": "ranger",
+            "finalWeapons": "風の弓 Lv8 / 水のオーブ Lv6 / 光の槍 Lv8",
+            "seed": 54321,
+            "level": 21,
+            "kills": 372,
+            "deaths": 0,
+            "experience": 71,
+            "seconds": 120.0011215209961,
+            "deathEvents": []
+        },
+        {
+            "character": "warden",
+            "finalWeapons": "回転剣 Lv8 / 剣 Lv6 / 鞭 Lv8",
+            "seed": 54321,
+            "level": 21,
+            "kills": 341,
+            "deaths": 1,
+            "experience": 10,
+            "seconds": 120.00245666503906,
+            "deathEvents": [
+                "82.7秒・死亡処理後Lv11・回転剣 Lv8 / 鞭 Lv4"
+            ]
+        },
+        {
+            "character": "knight",
+            "finalWeapons": "回転剣 Lv7 / 大剣 Lv8",
+            "seed": 54321,
+            "level": 21,
+            "kills": 376,
+            "deaths": 0,
+            "experience": 104,
+            "seconds": 120.00341033935547,
+            "deathEvents": []
+        },
+        {
+            "character": "lancer",
+            "finalWeapons": "槍 Lv8 / ボウガン Lv4",
+            "seed": 54321,
+            "level": 11,
+            "kills": 297,
+            "deaths": 3,
+            "experience": 14,
+            "seconds": 120.00130462646485,
+            "deathEvents": [
+                "95.2秒・死亡処理後Lv13・槍 Lv8 / ボウガン Lv6",
+                "106.4秒・死亡処理後Lv12・槍 Lv8 / ボウガン Lv5",
+                "116.1秒・死亡処理後Lv11・槍 Lv8 / ボウガン Lv4"
+            ]
+        }
+    ],
+    "error": ""
+}

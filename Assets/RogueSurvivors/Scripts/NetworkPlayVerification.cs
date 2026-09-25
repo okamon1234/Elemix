@@ -68,6 +68,20 @@ namespace RogueSurvivors
             local.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
             if (!moved) { Finish(false, "Remote NetworkTransform did not move; local " + localBefore + " -> " + local.transform.position + "; remote " + before + " -> " + remote.transform.position); yield break; }
             Pass("Remote player movement replicated");
+            if(report.role=="guest") {
+                var fusionStats=local.GetComponent<PlayerStats>();
+                foreach(var w in local.GetComponents<WeaponBase>())w.SetLevel(0);
+                fusionStats.GetComponent<DaggerWeapon>().SetLevel(4);fusionStats.GetComponent<GauntletWeapon>().SetLevel(4);
+                local.GetComponent<NetworkPlayerSync>().PublishBuild();
+                while(!FindFirstObjectByType<PhysicalMissile>())yield return null;
+                Pass("Combined physical weapon effect RPC rendered on guest");
+            } else {
+                while(!remote.GetComponent<PlayerStats>().FusionIds.Contains("knifegloves"))yield return null;
+                if(remote.GetComponent<PlayerStats>().WeaponCount!=1){Finish(false,"Fusion did not replicate as one weapon slot");yield break;}
+                Pass("Two ingredients replicated as a single fused weapon");
+                local.GetComponent<NetworkPlayerSync>().BroadcastEffect(2024,local.transform.position,local.transform.position+Vector3.right*5);
+            }
+            yield return new WaitForSecondsRealtime(.8f);
             var health = boss.GetComponent<EnemyHealth>();
             int totalLevel = FindObjectsByType<PlayerStats>(FindObjectsSortMode.None).Sum(p => p.Level);
             if (boss.GetComponent<BossDifficulty>().TeamLevel != totalLevel) { Finish(false, "Boss team level does not match player builds"); yield break; }

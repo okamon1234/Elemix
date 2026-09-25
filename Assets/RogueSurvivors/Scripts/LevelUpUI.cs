@@ -21,9 +21,9 @@ namespace RogueSurvivors
             for (int i = 0; i < options.Count; i++)
             {
                 int index = i;
-                var button = UIFactory.Button("Card" + i, panel.transform, new Vector2(.5f, .5f), new Vector2((i - 1) * 335, -30), new Vector2(310, 250),
+                var button = UIFactory.Button("Card" + i, panel.transform, new Vector2(.5f, .5f), new Vector2((i - 1) * 335, -30), new Vector2(310, 310),
                     "[ " + (i + 1) + " ]\n\n" + options[i].Title + "\n\n" + options[i].Description, () => selected?.Invoke(index));
-                button.GetComponentInChildren<Text>().fontSize = 18;
+                button.GetComponentInChildren<Text>().fontSize = 17;
                 if (i == 0 && EventSystem.current) EventSystem.current.SetSelectedGameObject(button.gameObject);
             }
         }

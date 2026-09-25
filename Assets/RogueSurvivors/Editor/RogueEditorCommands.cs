@@ -29,6 +29,7 @@ namespace RogueSurvivors.Editor
                 {
                     case "Setup": RogueProjectSetup.Setup(); break;
                     case "Smoke": RogueSmokeRunner.Run(); break;
+                    case "BossBalance": BossBalanceRunner.Run(); break;
                     case "Balance": CombatBalanceRunner.Run(); break;
                     case "Build": RogueBuild.Build(); break;
                     case "ReloadTest": RogueReloadTest.Run(); break;

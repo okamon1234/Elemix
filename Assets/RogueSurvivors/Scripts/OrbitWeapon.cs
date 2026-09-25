@@ -11,7 +11,7 @@ namespace RogueSurvivors
         protected override float Interval => .28f;
         protected override void Update()
         {
-            int count = Level == 0 || !Health.Alive ? 0 : 1 + Level / 2;
+            int count = Level == 0 || !Health.Alive || PhysicalEvolution.Active(this) ? 0 : 1 + Level / 2;
             while (blades.Count < count) blades.Add(Instantiate(bladePrefab, transform).transform);
             while (blades.Count > count) { Destroy(blades[blades.Count - 1].gameObject); blades.RemoveAt(blades.Count - 1); }
             angle += Time.deltaTime * (110 + Level * 10);

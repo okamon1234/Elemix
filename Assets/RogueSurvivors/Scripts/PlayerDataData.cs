@@ -22,17 +22,28 @@ namespace RogueSurvivors
         public float pickupRadius = 2.4f;
         public int kills;
         public List<WeaponSaveData> weapons = new List<WeaponSaveData>();
+        public List<string> physicalFusions = new List<string>();
         public List<UpgradeRecord> upgradeHistory = new List<UpgradeRecord>();
         public PlayerDataData NetworkCopy()
         {
             return new PlayerDataData { version = version, level = level, experience = experience, characterId = characterId,
                 regeneration = regeneration, damageReduction = damageReduction, moveSpeed = moveSpeed, damageMultiplier = damageMultiplier,
-                maxHealth = maxHealth, pickupRadius = pickupRadius, kills = kills, weapons = new List<WeaponSaveData>(weapons) };
+                maxHealth = maxHealth, pickupRadius = pickupRadius, kills = kills, weapons = new List<WeaponSaveData>(weapons), physicalFusions=physicalFusions==null?new List<string>():new List<string>(physicalFusions) };
         }
         public bool IsValid()
         {
             if (weapons == null || weapons.Count > WeaponCatalog.All.Length) return false;
             if (upgradeHistory != null && (upgradeHistory.Count > 1000 || upgradeHistory.Exists(r => r == null || !Enum.IsDefined(typeof(UpgradeKind), r.kind) || float.IsNaN(r.previousValue) || float.IsInfinity(r.previousValue)))) return false;
+            if(physicalFusions!=null && (physicalFusions.Count>5 || physicalFusions.Exists(id=>PhysicalEvolution.ById(id)==null)))return false;
+            if(upgradeHistory!=null) foreach(var record in upgradeHistory) {
+                if(record.hasPhysicalSnapshot) {
+                    if(record.physicalWeapons==null)return false;
+                    if(record.physicalWeapons.Count>12)return false;
+                    var snapshotIds=new HashSet<string>();
+                    foreach(var w in record.physicalWeapons) if(w==null||!WeaponCatalog.IsPhysical(w.id)||w.level<1||w.level>8||!snapshotIds.Add(w.id))return false;
+                }
+                if(record.physicalFusions!=null && (record.physicalFusions.Count>5 || record.physicalFusions.Exists(id=>PhysicalEvolution.ById(id)==null)))return false;
+            }
             var ids = new HashSet<string>();
             foreach (var weapon in weapons)
                 if (weapon == null || WeaponCatalog.Find(weapon.id) == null || weapon.level < 1 || weapon.level > 8 || !ids.Add(weapon.id)) return false;
