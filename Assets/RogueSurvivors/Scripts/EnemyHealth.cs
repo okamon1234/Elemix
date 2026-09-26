@@ -32,7 +32,7 @@ namespace RogueSurvivors
             if (sync && sync.IsNetworked) { sync.RequestDamage(amount, source, element); return; }
             ReceiveHit(amount, direction, source, element);
         }
-        public void ReceiveHit(float amount, Vector2 direction, PlayerHealth source, CombatElement element)
+        public void ReceiveHit(float amount, Vector2 direction, PlayerHealth source, CombatElement element, bool? sourceBarrier = null)
         {
             if (!Alive || amount <= 0 || float.IsNaN(amount) || float.IsInfinity(amount)) return;
             var bossAI = GetComponent<BossAI>(); if (bossAI && (bossAI.IsTransforming || (bossAI.Phase < 3 && Current <= maximum * .5f))) return;
@@ -40,7 +40,7 @@ namespace RogueSurvivors
             if (!reactions) reactions = gameObject.AddComponent<ElementReaction>();
             if (element == CombatElement.None && GetComponent<EnemyAilment>()) amount *= GetComponent<EnemyAilment>().PhysicalMultiplier;
             var affinity = GetComponent<EnemyAffinity>(); if (affinity) amount *= affinity.Multiplier(element);
-            amount = reactions.Resolve(amount, element, source);
+            amount = reactions.Resolve(amount, element, source, sourceBarrier);
             var parts = GetComponent<BossParts>();
             Vector2 origin = source ? (Vector2)source.transform.position : (Vector2)transform.position - direction;
             bool bypass=false;var reward=GetComponent<BossBreakReward>();

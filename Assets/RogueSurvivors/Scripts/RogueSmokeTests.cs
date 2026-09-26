@@ -300,7 +300,15 @@ namespace RogueSurvivors
             Check(Mathf.Approximately(beforePhysical - statusVictim.Current, 25), "Superconduct increases subsequent physical damage by 25 percent");
             yield return new WaitForSeconds(.45f);
             var spreadVictim = Instantiate(prefab, statusVictim.transform.position + Vector3.up, Quaternion.identity).GetComponent<EnemyHealth>(); spreadVictim.GetComponent<EnemyAI>().enabled = false;
+            float spreadHp=spreadVictim.Current;
             statusVictim.Damage(1, Vector2.zero, player, CombatElement.Water); statusVictim.Damage(1, Vector2.zero, player, CombatElement.Wind);
+            var support=statusVictim.GetComponent<ElementReaction>();
+            Check(spreadVictim.Current==spreadHp && support.Cooldown==0,"Swirl spreads aura without extra damage or normal reaction cooldown");
+            Check(support.Resolve(10,CombatElement.Fire,player)==21,"Water wind fire immediately vaporizes without waiting for swirl");
+            float normalWait=support.Cooldown;
+            support.Resolve(1,CombatElement.Water,player);support.Resolve(1,CombatElement.Wind,player);
+            Check(support.Cooldown==normalWait,"Wind does not extend an existing normal reaction cooldown");
+            support.Restore((int)CombatElement.Water,4);
             Check(statusVictim.GetComponent<ElementReaction>().Aura==CombatElement.Water,"Swirl retains the original target aura even without nearby targets");
             statusVictim.Damage(1,Vector2.zero,player,CombatElement.Wind);
             Check(statusVictim.GetComponent<ElementReaction>().Aura==CombatElement.Water,"Wind during reaction cooldown does not overwrite retained water");
@@ -393,7 +401,7 @@ namespace RogueSurvivors
             player.transform.position = originalPosition;
             var reactionObject = new GameObject("Element verification");
             var reactions = reactionObject.AddComponent<ElementReaction>();
-            Check(reactions.Resolve(10, CombatElement.Fire, player) == 10 && reactions.Resolve(10, CombatElement.Wind, player) == 13, "Fire plus wind swirls and retains fire");
+            Check(reactions.Resolve(10, CombatElement.Fire, player) == 10 && reactions.Resolve(10, CombatElement.Wind, player) == 10, "Fire plus wind swirls and retains fire");
             yield return new WaitForSeconds(.45f);
             reactions.Resolve(10, CombatElement.Fire, player);
             Check(reactions.Resolve(10, CombatElement.Lightning, player) == 20, "Fire plus lightning triggers overload");
@@ -401,6 +409,45 @@ namespace RogueSurvivors
             reactions.Resolve(10, CombatElement.Ice, player);
             Check(reactions.Resolve(10, CombatElement.Fire, player) == 24, "Ice plus fire triggers melt in reverse order");
             Destroy(reactionObject);
+            var firstElements=new[]{CombatElement.Fire,CombatElement.Ice,CombatElement.Water,CombatElement.Lightning};
+            var nextElements=new[]{CombatElement.Water,CombatElement.Fire,CombatElement.Ice,CombatElement.Fire};
+            var expectedDamage=new[]{21f,24f,10f,20f};
+            for(int i=0;i<firstElements.Length;i++) {
+                var testObject=new GameObject("Support reaction regression");
+                var test=testObject.AddComponent<ElementReaction>();
+                test.Restore((int)firstElements[i],2);
+                for(int wind=0;wind<20;wind++)test.Resolve(10,CombatElement.Wind,player);
+                Check(test.Aura==firstElements[i] && test.Remaining==2 && test.Cooldown==0,"Repeated wind preserves aura lifetime and normal reaction readiness: "+firstElements[i]);
+                Check(test.Resolve(10,nextElements[i],player)==expectedDamage[i] && test.Aura==CombatElement.None,"Normal reaction follows repeated wind immediately: "+firstElements[i]);
+                Destroy(testObject);
+            }
+            var barrierObject=new GameObject("Barrier reaction regression");
+            var barrierReaction=barrierObject.AddComponent<ElementReaction>();
+            barrierReaction.Resolve(1,CombatElement.Wind,player);
+            Check(barrierReaction.Aura==CombatElement.None,"Wind does not leave a persistent wind aura");
+            foreach(var unspreadable in new[]{CombatElement.Wood,CombatElement.Earth,CombatElement.Light,CombatElement.Dark}) {
+                barrierReaction.Restore((int)unspreadable,2);barrierReaction.Resolve(1,CombatElement.Wind,player);
+                Check(barrierReaction.Aura==unspreadable && barrierReaction.Remaining==2,"Wind preserves non-spreadable aura: "+unspreadable);
+            }
+            player.GrantBarrier();
+            int crystalCount=FindObjectsByType<CrystalPickup>(FindObjectsSortMode.None).Length;
+            barrierReaction.Restore((int)CombatElement.Water,2);
+            barrierReaction.Resolve(10,CombatElement.Earth,player);
+            Check(player.HasBarrier && barrierReaction.Aura==CombatElement.Water && barrierReaction.Remaining==2 && barrierReaction.Cooldown==0,"Protected player earth hit preserves aura timer and reaction readiness");
+            Check(FindObjectsByType<CrystalPickup>(FindObjectsSortMode.None).Length==crystalCount,"Protected player does not create another crystal");
+            Check(barrierReaction.Resolve(10,CombatElement.Fire,player)==21,"Suppressed crystallize allows immediate vaporize");
+            yield return new WaitForSeconds(.45f);
+            barrierReaction.Restore((int)CombatElement.Earth,2);barrierReaction.Resolve(10,CombatElement.Water,player);
+            Check(barrierReaction.Aura==CombatElement.Water && barrierReaction.Cooldown==0,"Protected player replaces stored earth with incoming reactive aura without crystallize");
+            player.SetRemoteBarrier(false);
+            barrierReaction.Restore((int)CombatElement.Water,2);barrierReaction.Resolve(10,CombatElement.Earth,player,true);
+            Check(barrierReaction.Aura==CombatElement.Water && barrierReaction.Cooldown==0,"Guest barrier snapshot suppresses crystallize before replicated shield arrives");
+            barrierReaction.Resolve(10,CombatElement.Earth,player,false);
+            Check(barrierReaction.Aura==CombatElement.None && barrierReaction.Cooldown>0,"Crystallize resumes when the attacking player has no barrier");
+            barrierReaction.Restore((int)CombatElement.Fire,2);
+            Check(!barrierReaction.ReceiveSpread(CombatElement.Water) && barrierReaction.Aura==CombatElement.Fire && barrierReaction.Remaining==2,"Spread does not overwrite a different pending aura");
+            Destroy(barrierObject);
+
             boss.RestoreEncounter(0, 2, (int)BossAttack.Charge, Vector2.right*8, 1);
             boss.RestoreState((int)BossState.Windup, .05f, Vector2.right, 1);
             yield return new WaitForSeconds(.12f);

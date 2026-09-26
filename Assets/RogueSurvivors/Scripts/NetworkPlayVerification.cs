@@ -130,6 +130,13 @@ namespace RogueSurvivors
                 Pass("Earth reaction shield replicated to guest owner");
                 yield return new WaitForSecondsRealtime(1);
                 health.Damage(10,Vector2.zero,local,CombatElement.Water);
+                yield return new WaitForSeconds(.2f);
+                health.Damage(10,Vector2.zero,local,CombatElement.Wind);
+                health.Damage(10,Vector2.zero,local,CombatElement.Earth);
+                yield return new WaitForSeconds(.3f);
+                if(boss.GetComponent<NetworkEnemySync>().ElementAura!=(int)CombatElement.Water || FindFirstObjectByType<CrystalPickup>()) {Finish(false,"Protected guest wind/earth consumed water or created crystal");yield break;}
+                Pass("Guest wind and protected earth preserve water without another crystal");
+
                 yield return new WaitForSecondsRealtime(.2f);
                 health.Damage(10,Vector2.zero,local,CombatElement.Wood);
                 while(boss.GetComponent<NetworkEnemySync>().BloomState.z!=1)yield return null;

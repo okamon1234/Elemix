@@ -36,7 +36,7 @@ namespace RogueSurvivors
 #if ROGUE_FUSION
             if (!IsNetworked || !source || !source.IsLocal) return;
             var playerObject = source.GetComponent<NetworkObject>();
-            if (playerObject && playerObject.IsValid && playerObject.HasStateAuthority) RPC_RequestDamage(amount, playerObject.Id, (int)element);
+            if (playerObject && playerObject.IsValid && playerObject.HasStateAuthority) RPC_RequestDamage(amount, playerObject.Id, (int)element, source.HasBarrier);
 #endif
         }
         public void GiveCrystal(PlayerHealth player)
@@ -165,7 +165,7 @@ namespace RogueSurvivors
             if (Result != 0 && GameManager.Instance) GameManager.Instance.Finish(Result == 1);
         }
         [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-        void RPC_RequestDamage(float amount, NetworkId sourceId, int element, RpcInfo info = default)
+        void RPC_RequestDamage(float amount, NetworkId sourceId, int element, bool sourceBarrier, RpcInfo info = default)
         {
             if (!GameManager.Instance.IsPlaying || float.IsNaN(amount) || float.IsInfinity(amount) || amount <= 0) return;
             if (!Runner.TryFindObject(sourceId, out var source)) return;
@@ -174,7 +174,7 @@ namespace RogueSurvivors
             if (!player || !player.Alive || Vector3.Distance(source.transform.position, transform.position) > 25) return;
             float maximum = 240 * player.GetComponent<PlayerStats>().DamageMultiplier;
             if (element < 0 || element > (int)CombatElement.Earth) return;
-            health.ReceiveHit(Mathf.Clamp(amount, 0, maximum), Vector2.zero, player, (CombatElement)element);
+            health.ReceiveHit(Mathf.Clamp(amount, 0, maximum), Vector2.zero, player, (CombatElement)element, sourceBarrier);
             PartHealth = GetComponent<BossParts>().Health;
             HealthValue = health.Current;
         }

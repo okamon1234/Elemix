@@ -7,33 +7,36 @@ namespace RogueSurvivors
     {
         public CombatElement Aura { get; private set; }
         public float Remaining { get; private set; }
-        float cooldown;
+        float cooldown, swirlCooldown;
         public float Cooldown => cooldown;
         public void Restore(int aura, float remaining) { Aura = (CombatElement)aura; Remaining = remaining; }
-        void Update() { Remaining = Mathf.Max(0, Remaining - Time.deltaTime); cooldown = Mathf.Max(0, cooldown - Time.deltaTime); if (Remaining == 0) Aura = CombatElement.None; }
-        public float Resolve(float amount, CombatElement incoming, PlayerHealth source)
+        void Update() { Remaining = Mathf.Max(0, Remaining - Time.deltaTime); cooldown = Mathf.Max(0, cooldown - Time.deltaTime); swirlCooldown = Mathf.Max(0, swirlCooldown - Time.deltaTime); if (Remaining == 0) Aura = CombatElement.None; }
+        public float Resolve(float amount, CombatElement incoming, PlayerHealth source, bool? sourceBarrier = null)
         {
             if (incoming == CombatElement.None) return amount;
+            bool protectedSource=sourceBarrier ?? (source && source.HasBarrier);
+            // 風は付着を奪わず、通常反応の時計にも触れない。ダメージは風武器そのものだけ。
+            if(incoming==CombatElement.Wind){SpreadAura();return amount;}
+            // 保持中の結晶を増やせない土攻撃は、付着・反応の待ち時間を変更しない。
+            if(incoming==CombatElement.Earth && protectedSource)return amount;
+            if(Aura==CombatElement.Wind){Aura=CombatElement.None;Remaining=0;}
             var periodicState = GetComponent<ReactionDamage>();
             if (periodicState && periodicState.TryCatalyze(incoming, amount, source)) return amount;
-            CombatElement spread = Aura == CombatElement.Wind ? incoming : Aura;
+            CombatElement spread = Aura;
             int reaction = Recipe(Aura, incoming);
+            if(reaction==11 && protectedSource){Aura=incoming;Remaining=4;return amount;}
             if (reaction != 0 && cooldown <= 0)
             {
-                float multiplier = reaction == 12 || reaction == 13 ? 1.3f : reaction == 10 ? 2f : reaction == 8 || reaction == 9 || reaction == 11 ? 1f : reaction == 2 ? 2f : reaction == 6 ? 1f : reaction == 3 ? 2.4f : reaction == 4 ? 2.1f : reaction == 7 ? 2.8f : 1.6f;
-                Aura = reaction == 13 ? spread : CombatElement.None; Remaining = reaction == 13 ? 4 : 0; cooldown = GetComponent<EnemyHealth>() && GetComponent<EnemyHealth>().IsBoss ? .75f : .4f;
+                float multiplier = reaction == 12 ? 1.3f : reaction == 10 ? 2f : reaction == 8 || reaction == 9 || reaction == 11 ? 1f : reaction == 2 ? 2f : reaction == 6 ? 1f : reaction == 3 ? 2.4f : reaction == 4 ? 2.1f : reaction == 7 ? 2.8f : 1.6f;
+                Aura = CombatElement.None; Remaining = 0; cooldown = GetComponent<EnemyHealth>() && GetComponent<EnemyHealth>().IsBoss ? .75f : .4f;
                 var sync = GetComponent<NetworkEnemySync>();
                 if (sync && sync.IsNetworked) sync.BroadcastReaction(reaction, (int)spread);
                 else Show(reaction, spread);
-                if (reaction == 5 || reaction == 7 || reaction == 13)
+                if (reaction == 5 || reaction == 7)
                     foreach (var enemy in new List<EnemyHealth>(EnemyHealth.Active))
                         if (enemy && enemy.gameObject != gameObject && enemy.Alive && Vector2.Distance(transform.position, enemy.transform.position) <= 3.5f)
                         {
-                            enemy.ReceiveSecondary(amount * (reaction == 13 ? .45f : .8f), source);
-                            if (reaction == 13 && enemy && enemy.Alive) {
-                                var aura = enemy.GetComponent<ElementReaction>(); if (!aura) aura = enemy.gameObject.AddComponent<ElementReaction>();
-                                aura.Restore((int)spread, 4);
-                            }
+                            enemy.ReceiveSecondary(amount * .8f, source);
                         }
                 if (reaction == 12) { var ailment = GetComponent<EnemyAilment>(); if (!ailment) ailment = gameObject.AddComponent<EnemyAilment>(); ailment.Superconduct(); }
                 if (reaction == 6) { var ailment = GetComponent<EnemyAilment>(); if (!ailment) ailment = gameObject.AddComponent<EnemyAilment>(); ailment.Freeze(1.5f); }
@@ -48,9 +51,31 @@ namespace RogueSurvivors
                 return amount * multiplier;
             }
             if (reaction != 0 && cooldown > 0) { Remaining = 4; return amount; }
-            if (reaction != 13 || Aura == CombatElement.None) Aura = incoming; else Aura = spread;
+            Aura = incoming;
             Remaining = 4;
             return amount;
+        }
+        void SpreadAura()
+        {
+            if(swirlCooldown>0 || Remaining<=0 || Recipe(Aura,CombatElement.Wind)!=13)return;
+            swirlCooldown=GetComponent<EnemyHealth>() && GetComponent<EnemyHealth>().IsBoss ? .75f : .4f;
+            bool applied=false;
+            foreach(var enemy in new List<EnemyHealth>(EnemyHealth.Active)) {
+                if(!enemy || !enemy.Alive || enemy.gameObject==gameObject || Vector2.Distance(transform.position,enemy.transform.position)>3.5f)continue;
+                var target=enemy.GetComponent<ElementReaction>();if(!target)target=enemy.gameObject.AddComponent<ElementReaction>();
+                applied|=target.ReceiveSpread(Aura);
+            }
+            // 単体ボスに広げる相手がいないとき、無意味な拡散表示を連発しない。
+            if(!applied)return;
+            var sync=GetComponent<NetworkEnemySync>();
+            if(sync && sync.IsNetworked)sync.BroadcastReaction(13,(int)Aura);else Show(13,Aura);
+        }
+        public bool ReceiveSpread(CombatElement element)
+        {
+            if(Recipe(element,CombatElement.Wind)!=13)return false;
+            // 他の付着を上書きして、成立待ちの反応を消さない。
+            if(Remaining>0 && Aura!=CombatElement.None && Aura!=CombatElement.Wind && Aura!=element)return false;
+            Aura=element;Remaining=4;return true;
         }
         public static int Recipe(CombatElement a, CombatElement b)
         {
