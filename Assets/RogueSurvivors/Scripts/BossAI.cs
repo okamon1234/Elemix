@@ -1,7 +1,7 @@
 using UnityEngine;
 namespace RogueSurvivors
 {
-    public enum BossState { Pursue, Windup, Dash, Recover, Transforming }
+    public enum BossState { Pursue, Windup, Dash, Recover, Transforming, Stagger }
     [RequireComponent(typeof(Rigidbody2D), typeof(EnemyHealth))]
     public sealed class BossAI : MonoBehaviour
     {
@@ -19,13 +19,14 @@ namespace RogueSurvivors
         public int ChargesLeft { get; private set; }
         public bool IsTransforming => State == BossState.Transforming;
         public string DisplayName => BossCatalog.Names[(int)Kind];
-        public string ActionLabel => IsTransforming ? "形態変化中・本体無敵" : State==BossState.Windup ? "予告："+BossCatalog.AttackName(PendingAttack) : "第"+Phase+"形態"+(Phase==3?"・限界突破":PhaseTwo?"・"+BossCatalog.PhaseNames[(int)Kind]:"");
+        public string ActionLabel => State==BossState.Stagger ? "部位破壊・ひるみ" : IsTransforming ? "形態変化中・本体無敵" : State==BossState.Windup ? "予告："+BossCatalog.AttackName(PendingAttack) : "第"+Phase+"形態"+(Phase==3?"・限界突破":PhaseTwo?"・"+BossCatalog.PhaseNames[(int)Kind]:"");
         Rigidbody2D body;
         EnemyHealth health;
         NetworkEnemySync sync;
         BossDifficulty difficulty;
         BossParts parts;
         BossAttackDirector attacks;
+        BossBreakReward reward;
         bool configured;
         float AttackRate => (difficulty ? difficulty.AttackRate : 1) * (Phase==3?1.3f:PhaseTwo?1.12f:1) * (1+parts.BrokenCount*.08f);
         float DamageScale => (difficulty ? difficulty.DamageScale : 1) * (Phase==3?1.22f:PhaseTwo?1.08f:1) * (1+parts.BrokenCount*.075f);
@@ -36,8 +37,11 @@ namespace RogueSurvivors
             if(!GetComponent<ElementReaction>()) gameObject.AddComponent<ElementReaction>();
             body=GetComponent<Rigidbody2D>(); health=GetComponent<EnemyHealth>(); sync=GetComponent<NetworkEnemySync>(); difficulty=GetComponent<BossDifficulty>();
             attacks=GetComponent<BossAttackDirector>(); if(!attacks) attacks=gameObject.AddComponent<BossAttackDirector>();
+            reward=GetComponent<BossBreakReward>();if(!reward)reward=gameObject.AddComponent<BossBreakReward>();
+            if(!GetComponent<BossOpportunityVisual>())gameObject.AddComponent<BossOpportunityVisual>();
             if(!GetComponent<BossAppearance>()) gameObject.AddComponent<BossAppearance>();
         }
+        public void BeginBreakStagger() { attacks.StopAllCoroutines(); State=BossState.Stagger;Remaining=BossBreakReward.StaggerSeconds;ChargesLeft=0;body.linearVelocity=Vector2.zero; }
         public void ConfigureDifficulty(PlayerStats[] players)
         {
             if(configured) return; configured=true; Kind=BossCatalog.Choose();
@@ -66,6 +70,8 @@ namespace RogueSurvivors
         {
             if(sync && !sync.IsAuthority) return;
             if(!health.Alive || !GameManager.Instance || !GameManager.Instance.IsPlaying) { body.linearVelocity=Vector2.zero; return; }
+            if(reward.Stagger>0){State=BossState.Stagger;Remaining=reward.Stagger;body.linearVelocity=Vector2.zero;return;}
+            if(State==BossState.Stagger){State=BossState.Recover;Remaining=.55f;}
             int desiredPhase=health.Current<=health.maximum*.5f?3:parts.Maximum>0 && parts.BrokenCount>0?2:1;
             if(desiredPhase>Phase) {
                 Phase=desiredPhase; State=BossState.Transforming; Remaining=2.4f; ChargesLeft=0; body.linearVelocity=Vector2.zero;
@@ -129,7 +135,7 @@ namespace RogueSurvivors
                 Instantiate(hostileBullet,transform.position+(Vector3)direction*1.6f,Quaternion.identity).Launch(direction,damage,speed,0,true);
             }
         }
-        void OnCollisionStay2D(Collision2D collision) { if(!IsTransforming) collision.gameObject.GetComponent<PlayerHealth>()?.Damage((State==BossState.Dash?30:18)*DamageScale); }
+        void OnCollisionStay2D(Collision2D collision) { if(!IsTransforming && State!=BossState.Stagger) collision.gameObject.GetComponent<PlayerHealth>()?.Damage((State==BossState.Dash?30:18)*DamageScale); }
         void OnCollisionEnter2D(Collision2D collision) => OnCollisionStay2D(collision);
     }
 }

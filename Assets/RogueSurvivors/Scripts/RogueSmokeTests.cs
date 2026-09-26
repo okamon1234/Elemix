@@ -342,6 +342,12 @@ namespace RogueSurvivors
             var armor = boss.GetComponent<BossParts>();
             var armoredHealth = boss.GetComponent<EnemyHealth>(); float coreBefore = armoredHealth.Current;
             Vector2 originalPosition = player.transform.position;
+            player.GrantInvulnerability(60);
+            var ping=player.GetComponent<PlayerPartPing>();
+            Check(ping.SetPart(armor,2) && ping.VisiblePart(armor)==2,"Local part ping chooses a live armor plate");
+            Check(!ping.SetPart(armor,7) && !ping.SetPart(armor,1),"Invalid and rapidly repeated pings are rejected");
+            Check(ping.SetPart(armor,-1) && ping.VisiblePart(armor)==-1,"Player can clear their own ping");
+            var opportunity=boss.GetComponent<BossBreakReward>();
             for (int part = 0; part < 4; part++) {
                 float angle = part * Mathf.PI / 2;
                 player.transform.position = boss.transform.position + new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * 3;
@@ -349,10 +355,36 @@ namespace RogueSurvivors
                 Check(armor.Health[part] == 0 && armoredHealth.Current == coreBefore, "Directional armor protects core and breaks part " + part);
                 if(part==0) {
                     yield return new WaitForSeconds(.12f);
+                    Check(boss.State==BossState.Stagger && boss.GetComponent<Rigidbody2D>().linearVelocity.sqrMagnitude<.001f,"Armor break interrupts movement for a short stagger");
+                    Check(!opportunity.Open,"Break reward cannot damage core during stagger");
+                    yield return new WaitForSeconds(1.15f);
                     Check(boss.Phase==2 && boss.IsTransforming && armoredHealth.Current==coreBefore,"First broken part starts phase two while core is full");
+                    Check(Mathf.Approximately(opportunity.Remaining,4),"Transformation preserves the full four-second reward");
                     yield return new WaitForSeconds(2.5f);
+                    Check(opportunity.Open,"Weak point opens after first transformation");
+                    var opportunityState=opportunity.Capture();bool bypass;
+                    Vector2 center=boss.transform.position;
+                    Check(opportunity.Resolve(10,center+Vector2.left*3,true,false,out bypass)==10 && !bypass,"Opposite side cannot bypass armor");
+                    Check(opportunity.Resolve(10,center+Vector2.right*6,true,false,out bypass)==10 && !bypass,"Distant attacks cannot claim close weak point reward");
+                    Check(Mathf.Approximately(opportunity.Resolve(10,center+Vector2.right*3,true,false,out bypass),16) && bypass,"Close physical hit earns 1.6x and bypasses remaining armor");
+                    Check(Mathf.Approximately(opportunity.Resolve(10,center+Vector2.right*3,false,false,out bypass),13),"Close elemental hit earns 1.3x");
+                    Check(Mathf.Approximately(opportunity.Resolve(10,center+Vector2.right*3,false,true,out bypass),11.5f),"Reaction follow-up has a smaller bounded bonus");
+                    opportunity.Restore(opportunityState);
+                    player.transform.position=center+Vector2.right*3;
+                    armoredHealth.Damage(10,Vector2.zero,player);
+                    Check(Mathf.Approximately(armoredHealth.Current,coreBefore-16),"Real combat path applies weak point damage while other armor remains");
+                    armoredHealth.SetSynchronizedHealth(coreBefore,armoredHealth.maximum);
+                    opportunity.Restore(opportunityState);
+                    float capped=opportunity.Resolve(armoredHealth.maximum,center+Vector2.right*3,true,false,out bypass);
+                    Check(Mathf.Approximately(capped,armoredHealth.maximum*.035f) && !opportunity.Open,"Early core damage is capped at 3.5 percent per break");
+                    opportunity.Restore(opportunityState);opportunity.Begin(0);
+                    Check(opportunity.Capture()==opportunityState,"Same broken part cannot refresh reward or budget");
+                    opportunity.Tick(5);Check(!opportunity.Open,"Reward expires instead of leaving a permanent armor bypass");
+                    opportunity.Restore(opportunityState);Check(opportunity.Open && opportunity.Part==0,"Reward snapshot restores remaining time and budget");
+                    Check(!ping.SetPart(armor,0),"Destroyed armor cannot be pinged");
                 }
             }
+            opportunity.Clear();
             Check(armor.Exposed, "All four armor parts expose boss core");
             Check(armor.BreakOrder==(1|(2<<3)|(3<<6)|(4<<9)),"Armor records exact break order without losing earlier parts");
             Check(boss.Phase==2,"Breaking remaining parts retains phase two until half HP");

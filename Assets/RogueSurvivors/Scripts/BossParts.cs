@@ -1,7 +1,7 @@
 using UnityEngine;
 namespace RogueSurvivors
 {
-    // Four directional armor plates; all must break before the core can be damaged.
+    // 四方向の装甲。全破壊前の本体攻撃は、破壊直後の短い弱点チャンスに限る。
     public sealed class BossParts : MonoBehaviour
     {
         public Vector4 Health { get; private set; }
@@ -56,6 +56,7 @@ namespace RogueSurvivors
             if (maximum <= 0) return;
             initialized = true; Maximum = maximum; Health = health; BreakOrder = breakOrder;
         }
+        public Vector2 PartPosition(int index) => (Vector2)transform.position + new Vector2(Mathf.Cos(index*Mathf.PI/2),Mathf.Sin(index*Mathf.PI/2))*2;
         public int PartFrom(Vector2 origin)
         {
             Vector2 delta = origin - (Vector2)transform.position;
@@ -69,7 +70,7 @@ namespace RogueSurvivors
             int index = PartFrom(origin);
             if (Health[index] <= 0) return true;
             Vector4 next = Health; next[index] = Mathf.Max(0, next[index] - damage); Health = next;
-            if(next[index] <= 0) BreakOrder |= (index + 1) << ((BrokenCount - 1) * 3);
+            if(next[index] <= 0) { BreakOrder |= (index + 1) << ((BrokenCount - 1) * 3);GetComponent<BossBreakReward>()?.Begin(index); }
             EffectsService.Instance?.Popup(transform.position, PartName(index) + " −" + Mathf.CeilToInt(damage), new Color(1, .8f, .3f));
             return true;
         }
@@ -89,7 +90,7 @@ namespace RogueSurvivors
         public string Status()
         {
             if (Exposed) return "本体露出！　" + RouteDescription;
-            string text = "本体無敵　";
+            string text = "装甲　";
             for (int i = 0; i < 4; i++) text += PartName(i) + (Health[i] <= 0 ? "：破壊済 " : "：" + Mathf.CeilToInt(100 * Health[i] / Mathf.Max(1, Maximum)) + "% ");
             return text + "\n" + RouteDescription;
         }

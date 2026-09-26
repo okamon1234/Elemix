@@ -42,6 +42,16 @@ namespace RogueSurvivors
             boss.GetComponent<Rigidbody2D>().position=Vector2.zero;
             yield return new WaitForSecondsRealtime(4.2f);
             var director=boss.GetComponent<BossAttackDirector>(); var health=boss.GetComponent<EnemyHealth>(); var parts=boss.GetComponent<BossParts>();
+            player.GetComponent<PlayerPartPing>().SetPart(parts,0);
+            yield return new WaitForSecondsRealtime(.15f);SaveFrame(Path.Combine(folder,"部位指定ピン.png"));
+            parts.Absorb(parts.Maximum+1,(Vector2)boss.transform.position+Vector2.right*3);
+            boss.RestoreEncounter((int)boss.Kind,2,0,Vector2.zero,0);boss.RestoreState((int)BossState.Recover,4,Vector2.down,0);
+            boss.GetComponent<BossBreakReward>().Restore(new Vector4(1,4,0,health.maximum*BossBreakReward.BudgetFraction));
+            player.GetComponent<Rigidbody2D>().position=(Vector2)boss.transform.position+Vector2.right*3;
+            HUDController.Instance.Toast("");yield return new WaitForSecondsRealtime(.2f);
+            SaveFrame(Path.Combine(folder,"部位破壊の攻撃チャンス.png"));
+            boss.GetComponent<BossBreakReward>().Clear();parts.Restore(Vector4.one*parts.Maximum,parts.Maximum);
+            player.GetComponent<Rigidbody2D>().position=new Vector2(0,-5);
             for(int kind=0;kind<4;kind++) for(int phase=0;phase<3;phase++) {
                 director.StopAllCoroutines();
                 foreach(var bullet in FindObjectsByType<Bullet>(FindObjectsSortMode.None)) Destroy(bullet.gameObject);

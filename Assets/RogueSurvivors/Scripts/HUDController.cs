@@ -16,6 +16,7 @@ namespace RogueSurvivors
         {
             Instance = this; LevelUI = gameObject.AddComponent<LevelUpUI>();
             gameObject.AddComponent<BossMinimap>();
+            gameObject.AddComponent<BossTacticsUI>();
             recoveryLabel = UIFactory.Label("回復", transform, Vector2.up, new Vector2(24,-154), new Vector2(330,54), "", 15, new Color(.4f,1,.65f));
             var panel = UIFactory.Panel("Status", transform, Vector2.up, new Vector2(24, -24), new Vector2(320, 124), UIFactory.Ink);
             healthText = UIFactory.Label("Health", panel.transform, Vector2.up, new Vector2(18, -10), new Vector2(280, 28), "HP", 17);

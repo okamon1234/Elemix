@@ -43,7 +43,9 @@ namespace RogueSurvivors
             amount = reactions.Resolve(amount, element, source);
             var parts = GetComponent<BossParts>();
             Vector2 origin = source ? (Vector2)source.transform.position : (Vector2)transform.position - direction;
-            if (parts && parts.Absorb(amount * (element == CombatElement.None ? 1.35f : 1), origin)) return;
+            bool bypass=false;var reward=GetComponent<BossBreakReward>();
+            if(reward && source)amount=reward.Resolve(amount,origin,element==CombatElement.None,false,out bypass);
+            if (parts && !bypass && parts.Absorb(amount * (element == CombatElement.None ? 1.35f : 1), origin)) return;
             if (bossAI && bossAI.Phase < 3) amount = Mathf.Min(amount, Mathf.Max(0, Current - maximum * .5f));
             meleeFinisher=element==CombatElement.None && source && Vector2.Distance(source.transform.position,transform.position)<=4 ? source : null;
             ApplyDamage(amount, direction);
@@ -54,7 +56,9 @@ namespace RogueSurvivors
             if (!Alive || amount <= 0) return;
             var transformingBoss=GetComponent<BossAI>(); if(transformingBoss && transformingBoss.IsTransforming) return;
             var parts = GetComponent<BossParts>();
-            if (parts && parts.Absorb(amount, source ? (Vector2)source.transform.position : (Vector2)transform.position)) return;
+            bool bypass=false;var reward=GetComponent<BossBreakReward>();
+            if(reward && source)amount=reward.Resolve(amount,source.transform.position,false,true,out bypass);
+            if (parts && !bypass && parts.Absorb(amount, source ? (Vector2)source.transform.position : (Vector2)transform.position)) return;
             var bossAI = GetComponent<BossAI>();
             if (bossAI && bossAI.IsTransforming) return;
             if (bossAI && bossAI.Phase < 3) amount = Mathf.Min(amount, Mathf.Max(0, Current - maximum * .5f));

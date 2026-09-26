@@ -22,7 +22,7 @@ namespace RogueSurvivors
                 UIFactory.Label("攻略"+k,panel.transform,Vector2.up,new Vector2(210,y-30),new Vector2(940,64),descriptions[k],18);
             }
             UIFactory.Label("共通ルール",panel.transform,Vector2.up,new Vector2(30,-516),new Vector2(1130,80),
-                "最初の部位で攻撃が分岐し第2形態へ。次の破壊で追加攻撃が変化。全破壊で本体露出、HP50%で第3形態。\n破壊1部位ごとに攻撃力＋7.5%・頻度＋8%。変身中は2.4秒無敵。\n回復：被弾後5秒で自動回復スキルが再開。応急手当はHP45%以下・6秒被弾なしで18%回復、35秒間隔・1戦3回。",16);
+                "Q／RB・部位ボタンで8秒間ピン共有。E／LBで解除。破壊順で攻撃が分岐し、最初の破壊で第2形態・HP50%で第3形態。\n破壊時1.1秒ひるみ→破壊側3.6m以内に4秒の弱点。物理1.6倍／属性1.3倍、追加分は本体HP3.5%が上限。変身中は時間停止。\n破壊ごとに攻撃力＋7.5%・頻度＋8%。全破壊で通常の本体攻撃も有効。回復：HP45%以下で6秒無傷→18%回復、1戦3回。",15);
             UIFactory.Button("閉じる",panel.transform,new Vector2(.5f,0),new Vector2(0,14),new Vector2(240,38),"閉じる",()=>panel.SetActive(false));
         }
     }

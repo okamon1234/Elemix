@@ -1,0 +1,29 @@
+{
+    "success": true,
+    "role": "host",
+    "checks": [
+        "Fusion Shared cloud connection",
+        "Two independent clients joined the same private room",
+        "Synchronized arena load and player/boss spawns",
+        "Remote player movement replicated",
+        "Two ingredients replicated as a single fused weapon",
+        "Mage initial wood element replicated independently from current weapons",
+        "Boss difficulty uses both player builds",
+        "Host selected dragon overrides guest boss selection",
+        "Independent part pings from both players replicated",
+        "Clearing one player's ping preserves the other player's target",
+        "Part pings expire on both clients after eight seconds",
+        "Authority created shared seed from guest hits",
+        "Authority accepted guest third element once",
+        "First broken part triggers phase two while core remains full",
+        "Authority accepts guest weak point hit and shares consumed reward budget",
+        "Four armor parts and bounded first-break core reward replicated",
+        "Exact part break order replicated to both clients",
+        "Guest attack reached boss authority and HP replicated",
+        "Authority enters dragon third phase",
+        "Third phase changes boss attack pattern",
+        "Victory state replicated and result displayed",
+        "Runner shutdown and return to home"
+    ],
+    "error": ""
+}

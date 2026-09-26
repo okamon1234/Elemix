@@ -85,6 +85,7 @@ namespace RogueSurvivors
         [Networked] public Vector4 PartHealth { get; set; }
         [Networked] public float PartMaximum { get; set; }
         [Networked] public int PartBreakOrder { get; set; }
+        [Networked] public Vector4 BreakRewardState { get; set; }
         [Networked] public Vector3 BloomState { get; set; }
         [Networked] public NetworkId BloomSource { get; set; }
         [Networked] public int ElementAura { get; set; }
@@ -108,7 +109,7 @@ namespace RogueSurvivors
                 var difficulty = GetComponent<BossDifficulty>();
                 TeamLevel = difficulty.TeamLevel; DamageScale = difficulty.DamageScale; AttackRate = difficulty.AttackRate;
                 HealthValue = health.Current; MaximumHealth = health.maximum;
-                var parts = GetComponent<BossParts>(); PartHealth = parts.Health; PartMaximum = parts.Maximum; PartBreakOrder = parts.BreakOrder;
+                var parts = GetComponent<BossParts>(); PartHealth = parts.Health; PartMaximum = parts.Maximum; PartBreakOrder = parts.BreakOrder; BreakRewardState=GetComponent<BossBreakReward>().Capture();
                 var bloom = GetComponent<ReactionDamage>();
                 if(bloom) { BloomState = bloom.CaptureBloom(); var owner=bloom.BloomOwner ? bloom.BloomOwner.GetComponent<NetworkObject>() : null; BloomSource=owner && owner.IsValid?owner.Id:default; }
                 var reaction = GetComponent<ElementReaction>(); ElementAura = (int)reaction.Aura; ElementRemaining = reaction.Remaining;
@@ -127,6 +128,7 @@ namespace RogueSurvivors
             {
                 health.SetSynchronizedHealth(HealthValue, MaximumHealth);
                 GetComponent<BossParts>().Restore(PartHealth, PartMaximum, PartBreakOrder);
+                GetComponent<BossBreakReward>().Restore(BreakRewardState);
                 var bloom = GetComponent<ReactionDamage>(); if(!bloom) bloom=gameObject.AddComponent<ReactionDamage>();
                 bloom.RestoreBloom(BloomState,Runner.TryFindObject(BloomSource,out var bloomOwner)?bloomOwner.GetComponent<PlayerHealth>():null);
                 GetComponent<ElementReaction>().Restore(ElementAura, ElementRemaining);
@@ -136,7 +138,7 @@ namespace RogueSurvivors
             if (IsAuthority)
             {
                 HealthValue = health.Current; MaximumHealth = health.maximum;
-                var parts = GetComponent<BossParts>(); PartHealth = parts.Health; PartMaximum = parts.Maximum; PartBreakOrder = parts.BreakOrder;
+                var parts = GetComponent<BossParts>(); PartHealth = parts.Health; PartMaximum = parts.Maximum; PartBreakOrder = parts.BreakOrder; BreakRewardState=GetComponent<BossBreakReward>().Capture();
                 var bloom = GetComponent<ReactionDamage>();
                 if(bloom) { BloomState = bloom.CaptureBloom(); var owner=bloom.BloomOwner ? bloom.BloomOwner.GetComponent<NetworkObject>() : null; BloomSource=owner && owner.IsValid?owner.Id:default; }
                 var reaction = GetComponent<ElementReaction>(); ElementAura = (int)reaction.Aura; ElementRemaining = reaction.Remaining;
@@ -153,6 +155,7 @@ namespace RogueSurvivors
             {
                 health.SetSynchronizedHealth(HealthValue, MaximumHealth);
                 GetComponent<BossParts>().Restore(PartHealth, PartMaximum, PartBreakOrder);
+                GetComponent<BossBreakReward>().Restore(BreakRewardState);
                 var bloom = GetComponent<ReactionDamage>(); if(!bloom) bloom=gameObject.AddComponent<ReactionDamage>();
                 bloom.RestoreBloom(BloomState,Runner.TryFindObject(BloomSource,out var bloomOwner)?bloomOwner.GetComponent<PlayerHealth>():null);
                 GetComponent<ElementReaction>().Restore(ElementAura, ElementRemaining);

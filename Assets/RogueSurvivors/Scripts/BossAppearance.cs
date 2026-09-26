@@ -5,11 +5,11 @@ namespace RogueSurvivors
     public sealed class BossAppearance : MonoBehaviour
     {
         static readonly Sprite[,] sprites=new Sprite[4,3];
-        BossAI boss; SpriteRenderer body; Vector3 originalScale; int last=-1; float nextEmber;
+        BossAI boss; SpriteRenderer body; Vector3 originalScale; Quaternion originalRotation; int last=-1; float nextEmber;
         void Start()
         {
             boss=GetComponent<BossAI>(); body=GetComponentInChildren<SpriteRenderer>();
-            if(body) { originalScale=body.transform.localScale; var animator=body.GetComponent<Animator>(); if(animator) animator.enabled=false; }
+            if(body) { originalScale=body.transform.localScale;originalRotation=body.transform.localRotation; var animator=body.GetComponent<Animator>(); if(animator) animator.enabled=false; }
         }
         void LateUpdate()
         {
@@ -31,6 +31,7 @@ namespace RogueSurvivors
             }
             float pulse=boss.IsTransforming?1+.09f*Mathf.Sin(Time.time*14):1+.012f*Mathf.Sin(Time.time*3);
             body.transform.localScale=originalScale*pulse;
+            body.transform.localRotation=originalRotation*(boss.State==BossState.Stagger?Quaternion.Euler(0,0,Mathf.Sin(Time.time*30)*4):Quaternion.identity);
         }
         public static Sprite GetSprite(BossKind kind,bool phaseTwo) => GetSprite(kind,phaseTwo?2:1);
         public static Sprite GetSprite(BossKind kind,int phase)

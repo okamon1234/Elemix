@@ -11,6 +11,39 @@ namespace RogueSurvivors
         MonoBehaviour
 #endif
     {
+        public bool IsNetworked {
+            get {
+#if ROGUE_FUSION
+                return Object && Object.IsValid;
+#else
+                return false;
+#endif
+            }
+        }
+        public int PartPing {
+            get {
+#if ROGUE_FUSION
+                return IsNetworked && !PingExpiry.ExpiredOrNotRunning(Runner)?PingPartValue-1:-1;
+#else
+                return -1;
+#endif
+            }
+        }
+        public int PingNumber {
+            get {
+#if ROGUE_FUSION
+                return IsNetworked?Mathf.Max(1,Object.StateAuthority.PlayerId):1;
+#else
+                return 1;
+#endif
+            }
+        }
+        public void PublishPartPing(int part) {
+#if ROGUE_FUSION
+            if(!IsLocalAuthority || part< -1 || part>3)return;
+            PingPartValue=part+1;PingExpiry=part>=0?TickTimer.CreateFromSeconds(Runner,PlayerPartPing.Lifetime):default;
+#endif
+        }
         public bool IsLocalAuthority
         {
             get {
@@ -42,6 +75,8 @@ namespace RogueSurvivors
 #endif
         }
 #if ROGUE_FUSION
+        [Networked] public int PingPartValue { get; set; }
+        [Networked] public TickTimer PingExpiry { get; set; }
         [Networked] public NetworkString<_512> BuildJson { get; set; }
         [Networked] public NetworkString<_512> BuildTail { get; set; }
         [Networked] public NetworkString<_512> BuildExtra { get; set; }
@@ -100,6 +135,7 @@ namespace RogueSurvivors
             if (Object.HasStateAuthority)
             {
                 HealthValue = health.Current; BarrierValue = health.HasBarrier;
+                if(!health.Alive || (GameManager.Instance && !GameManager.Instance.IsPlaying)){PingPartValue=0;PingExpiry=default;}
                 Moving = GetComponent<Rigidbody2D>().linearVelocity.sqrMagnitude > .01f;
                 FacingLeft = GetComponentInChildren<SpriteRenderer>().flipX;
             }

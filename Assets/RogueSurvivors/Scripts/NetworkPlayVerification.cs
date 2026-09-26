@@ -26,7 +26,7 @@ namespace RogueSurvivors
             int roomIndex = Array.IndexOf(args, "--rogue-room"), pathIndex = Array.IndexOf(args, "--rogue-report");
             test.room = roomIndex >= 0 && roomIndex + 1 < args.Length ? args[roomIndex + 1] : "verification";
             test.reportPath = pathIndex >= 0 && pathIndex + 1 < args.Length ? args[pathIndex + 1] : Path.Combine(Application.persistentDataPath, "NetworkVerification.json");
-            test.deadline = Time.realtimeSinceStartup + 100;
+            test.deadline = Time.realtimeSinceStartup + 135;
             Application.logMessageReceived += test.Log;
             test.StartCoroutine(test.Run());
         }
@@ -92,6 +92,27 @@ namespace RogueSurvivors
             if (boss.Kind != BossKind.Dragon) { Finish(false, "Host boss selection was not replicated: " + boss.Kind); yield break; }
             Pass("Host selected dragon overrides guest boss selection");
             var parts = boss.GetComponent<BossParts>();
+            local.GetComponent<PhysicalFusionCombat>().enabled=false;
+            var ping=local.GetComponent<PlayerPartPing>();
+            ping.SetPart(parts,report.role=="host"?2:1);
+            while(remote.GetComponent<PlayerPartPing>().VisiblePart(parts)!=(report.role=="host"?1:2))yield return null;
+            Pass("Independent part pings from both players replicated");
+            var originalRemoteExpiry=remote.GetComponent<NetworkPlayerSync>().PingExpiry;
+            yield return new WaitForSecondsRealtime(.75f);
+            if(report.role=="host"){
+                ping.SetPart(parts,-1);yield return new WaitForSecondsRealtime(.5f);
+                if(remote.GetComponent<PlayerPartPing>().VisiblePart(parts)!=1){Finish(false,"Clearing host ping erased guest ping");yield break;}
+            } else {
+                while(remote.GetComponent<PlayerPartPing>().VisiblePart(parts)!=-1)yield return null;
+                if(ping.VisiblePart(parts)!=1){Finish(false,"Other player clear removed local ping");yield break;}
+            }
+            Pass("Clearing one player's ping preserves the other player's target");
+            yield return new WaitForSecondsRealtime(8.2f);
+            if(!originalRemoteExpiry.ExpiredOrNotRunning(local.GetComponent<NetworkPlayerSync>().Runner) || ping.VisiblePart(parts)!=-1){Finish(false,"Part ping did not expire");yield break;}
+            Pass("Part pings expire on both clients after eight seconds");
+            ping.SetPart(parts,0);
+            while(remote.GetComponent<PlayerPartPing>().VisiblePart(parts)!=0)yield return null;
+            yield return new WaitForSecondsRealtime(.5f);
             if (report.role == "guest") {
                 while (boss.GetComponent<NetworkEnemySync>().ElementAura != 0) yield return null;
                 yield return new WaitForSecondsRealtime(.5f);
@@ -119,6 +140,7 @@ namespace RogueSurvivors
                 Pass("Guest third element triggered synchronized hyperbloom");
                 while(boss.GetComponent<NetworkEnemySync>().BloomState.z!=0)yield return null;
                 Pass("Consumed seed cleared on guest without duplicate detonation");
+                ping.SetPart(parts,0);yield return new WaitForSecondsRealtime(.5f);
                 for (int part = 0; part < 4; part++) {
                     float angle = part * Mathf.PI / 2;
                     local.GetComponent<Rigidbody2D>().position = (Vector2)boss.transform.position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 3;
@@ -132,7 +154,17 @@ namespace RogueSurvivors
                         float partDeadline = Time.realtimeSinceStartup + 3;
                         while (parts.Health[part] == partBefore && Time.realtimeSinceStartup < partDeadline) yield return null;
                         if (parts.Health[part] == partBefore) { Finish(false, "Part damage not acknowledged: " + part); yield break; }
-                        if (!parts.Exposed && health.Current != health.maximum) { Finish(false, "Core damaged while armor remained"); yield break; }
+                        if (!parts.Exposed && health.Current < health.maximum*(1-BossBreakReward.BudgetFraction)-.1f) { Finish(false, "Early core reward exceeded its budget"); yield break; }
+                    }
+                    if(part==0){
+                        while(boss.Phase<2 || boss.IsTransforming || !boss.GetComponent<BossBreakReward>().Open)yield return null;
+                        float beforeReward=health.Current;
+                        health.Damage(10,Vector2.zero,local);
+                        while(health.Current>=beforeReward)yield return null;
+                        while(boss.GetComponent<NetworkEnemySync>().BreakRewardState.w>=health.maximum*BossBreakReward.BudgetFraction)yield return null;
+                        Pass("Guest close-range weak point hit damages protected core through authority");
+                        if(ping.VisiblePart(parts)!=-1 || remote.GetComponent<PlayerPartPing>().VisiblePart(parts)!=-1){Finish(false,"Broken part ping stayed visible");yield break;}
+                        Pass("Destroyed part automatically hides both players' pings");
                     }
                 }
             }
@@ -141,15 +173,20 @@ namespace RogueSurvivors
                 Pass("Authority created shared seed from guest hits");
                 while(boss.GetComponent<NetworkEnemySync>().BloomState.z!=2) yield return null;
                 Pass("Authority accepted guest third element once");
+                ping.SetPart(parts,0);
                 while(parts.BrokenCount==0) yield return null;
-                boss.enabled=true; yield return new WaitForSecondsRealtime(.15f);
+                boss.enabled=true; yield return new WaitForSecondsRealtime(1.3f);
                 if(boss.Phase!=2 || !boss.IsTransforming) {Finish(false,"First part did not trigger phase two");yield break;}
                 Pass("First broken part triggers phase two while core remains full");
-                yield return new WaitForSecondsRealtime(2.5f); boss.enabled=false; boss.GetComponent<Rigidbody2D>().linearVelocity=Vector2.zero;
+                yield return new WaitForSecondsRealtime(2.5f);
+                while(health.Current>=health.maximum)yield return null;
+                if(boss.GetComponent<BossBreakReward>().Budget>=health.maximum*BossBreakReward.BudgetFraction){Finish(false,"Weak point budget did not decrease");yield break;}
+                Pass("Authority accepts guest weak point hit and shares consumed reward budget");
+                boss.enabled=false; boss.GetComponent<Rigidbody2D>().linearVelocity=Vector2.zero;
             }
             while (!parts.Exposed) yield return null;
-            if (health.Current != health.maximum) { Finish(false, "Core damaged before armor was removed"); yield break; }
-            Pass("Four directional parts broken by guest and replicated; core protected until exposed");
+            if (health.Current < health.maximum*(1-BossBreakReward.BudgetFraction)-.1f) { Finish(false, "Unexpected core damage outside first reward window"); yield break; }
+            Pass("Four armor parts and bounded first-break core reward replicated");
             if(parts.BreakOrder!=(1|(2<<3)|(3<<6)|(4<<9))) {Finish(false,"Break order was not replicated");yield break;}
             Pass("Exact part break order replicated to both clients");
             float beforeHit = health.Current;
@@ -162,7 +199,7 @@ namespace RogueSurvivors
                 yield return new WaitForSecondsRealtime(1.2f);
                 health.ApplyDamage(health.maximum*.55f, Vector2.zero);
                 boss.enabled=true;
-                yield return new WaitForSecondsRealtime(.15f);
+                yield return new WaitForSecondsRealtime(1.3f);
                 if (!boss.IsTransforming || boss.Phase<3) { Finish(false,"Authority did not enter transformation"); yield break; }
                 Pass("Authority enters dragon third phase");
                 yield return new WaitForSecondsRealtime(2.6f);

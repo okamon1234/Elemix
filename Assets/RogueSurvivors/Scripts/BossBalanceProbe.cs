@@ -10,7 +10,7 @@ namespace RogueSurvivors
     // 同じ武器強化回数・能力値で、装甲DPS、核DPS、実ボス戦を比較する。
     public sealed class BossBalanceProbe : MonoBehaviour
     {
-        [Serializable] public sealed class Row {public string build,boss,test;public int points,slots,fusions,broken;public float seconds,armorDps,coreDps,damageTaken,hpRemaining,armorTime,bossMaximum;public bool won,alive;}
+        [Serializable] public sealed class Row {public string build,boss,test;public int points,slots,fusions,broken;public float seconds,armorDps,coreDps,damageTaken,hpRemaining,armorTime,bossMaximum,weakPointDamage;public bool won,alive;}
         [Serializable] sealed class Report {public List<Row> runs=new List<Row>();public string error;}
         readonly Report report=new Report();PlayerHealth player;PlayerStats stats;BossAI boss;BossParts parts;EnemyHealth enemy;Rigidbody2D body;
         bool live,physical;byte[] save,backup;float oldDelta;
@@ -60,10 +60,13 @@ namespace RogueSurvivors
             foreach(int kind in new[]{0,1,2,3})foreach(string build in new[]{"physical","reaction","lightdark","hyperbloom","burgeon"}) {
                 UnityEngine.Random.InitState(24680+kind);yield return Load(build,48,kind);boss.enabled=true;live=true;
                 var row=new Row{test="live",build=build,boss=((BossKind)kind).ToString(),points=48,slots=stats.WeaponCount,fusions=stats.FusionIds.Count,bossMaximum=enemy.maximum,armorTime=-1};
-                float start=Time.time,lastHP=player.Current;
+                float start=Time.time,lastHP=player.Current,lastBudget=0;int lastPart=-1;
                 while(Time.time-start<120 && player.Alive && GameManager.Instance.IsPlaying && string.IsNullOrEmpty(report.error)) {
                     if(player.Current<lastHP)row.damageTaken+=lastHP-player.Current;lastHP=player.Current;
                     if(parts.Exposed&&row.armorTime<0)row.armorTime=Time.time-start;
+                    var reward=boss.GetComponent<BossBreakReward>();
+                    if(reward.Part!=lastPart){lastPart=reward.Part;lastBudget=enemy.maximum*BossBreakReward.BudgetFraction;}
+                    if(reward.Part>=0){row.weakPointDamage+=Mathf.Max(0,lastBudget-reward.Budget);lastBudget=reward.Budget;}
                     yield return null;
                 }
                 row.seconds=Time.time-start;row.alive=player.Alive;row.won=GameManager.Instance.Won;row.broken=parts?parts.BrokenCount:4;row.hpRemaining=enemy?enemy.Current:0;
@@ -78,6 +81,8 @@ namespace RogueSurvivors
             Vector2 center=boss.transform.position,position=body.position;int part=0;while(part<4&&parts.Health[part]<=0)part++;
             float angle=part<4?part*Mathf.PI*.5f:Mathf.Atan2(position.y-center.y,position.x-center.x)+.25f;
             Vector2 goal=center+new Vector2(Mathf.Cos(angle),Mathf.Sin(angle))*(physical?4:5.2f);
+            var opportunity=boss.GetComponent<BossBreakReward>();
+            if(opportunity.Open){angle=opportunity.Part*Mathf.PI*.5f;goal=center+new Vector2(Mathf.Cos(angle),Mathf.Sin(angle))*3;}
             Vector2 wanted=(goal-position).normalized,bestDirection=wanted;float best=float.MaxValue;
             var mechanics=FindObjectsByType<BossMechanic>(FindObjectsSortMode.None);var hazards=FindObjectsByType<BossHazard>(FindObjectsSortMode.None);var bullets=FindObjectsByType<Bullet>(FindObjectsSortMode.None);
             for(int i=0;i<12;i++) {

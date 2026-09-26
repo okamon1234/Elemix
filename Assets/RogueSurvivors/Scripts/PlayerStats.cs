@@ -13,6 +13,7 @@ namespace RogueSurvivors
         public int WeaponCount { get { PhysicalEvolution.Refresh(this); int count=0; foreach(var w in GetComponents<WeaponBase>()) if(w.Level>0) count++; return count-FusionIds.Count; } }
         void Awake()
         {
+            if (!GetComponent<PlayerPartPing>()) gameObject.AddComponent<PlayerPartPing>();
             if (!GetComponent<CharacterAppearance>()) gameObject.AddComponent<CharacterAppearance>();
             if (!GetComponent<BossRecovery>()) gameObject.AddComponent<BossRecovery>();
             if (!GetComponent<DaggerWeapon>()) gameObject.AddComponent<DaggerWeapon>();
