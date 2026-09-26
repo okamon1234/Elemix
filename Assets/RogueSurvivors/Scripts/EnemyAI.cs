@@ -10,7 +10,7 @@ namespace RogueSurvivors
         EnemyHealth health;
         int avoidanceSide;
         EnemyCombat combat;
-        void Awake() { body = GetComponent<Rigidbody2D>(); health = GetComponent<EnemyHealth>(); combat = GetComponent<EnemyCombat>(); avoidanceSide = Random.value < .5f ? -1 : 1; }
+        void Awake() { body = GetComponent<Rigidbody2D>(); health = GetComponent<EnemyHealth>(); combat = GetComponent<EnemyCombat>(); avoidanceSide = Random.value < .5f ? -1 : 1; if(!GetComponent<EnemyAppearance>())gameObject.AddComponent<EnemyAppearance>(); }
         void FixedUpdate()
         {
             var target = PlayerHealth.Local;

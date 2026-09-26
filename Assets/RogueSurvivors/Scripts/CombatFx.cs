@@ -34,7 +34,9 @@ namespace RogueSurvivors
         {
             if(kind==14) { for(int ray=0;ray<3;ray++) { var points=new Vector3[18]; for(int i=0;i<18;i++) { float t=i/17f; points[i]=new Vector2(Mathf.Cos(ray*2.094f),Mathf.Sin(ray*2.094f))*Mathf.Sin(t*Mathf.PI)*2.4f+Vector2.up*(1-t); } Stroke(points,new Color(.55f,1,.3f,.7f),.08f,.32f).transform.position=point; } }
             Color tint=kind==14?new Color(.55f,1,.3f):kind==13?ElementWeapon.ColorFor(spread):kind==6?ElementWeapon.ColorFor(CombatElement.Ice):kind==5||kind==12?new Color(.7f,.55f,1):kind==7?new Color(1,.75f,1):kind==8||kind==10?new Color(.45f,1,.3f):kind==11?new Color(1,.85f,.35f):new Color(1,.48f,.18f);
-            Ring(point,.65f,tint,.6f,3,.14f,kind==11?6:40);
+            int art=kind==6?2:kind==5||kind==12?3:kind==7?8:kind==8||kind==10||kind==14?5:kind==11?6:kind==13?4:0;
+            PaintedImpact.Show(art,point,kind==15?3:1.8f,.4f,0,kind==13?100:0);
+            Ring(point,.65f,new Color(tint.r,tint.g,tint.b,.3f),.45f,1.5f,.045f,kind==11?6:40);
             if(kind==13) for(int arc=0;arc<3;arc++) {
                 var points=new Vector3[20]; for(int i=0;i<points.Length;i++) {float a=arc*Mathf.PI*2/3+i*.12f; float r=.3f+i*.07f; points[i]=new Vector3(Mathf.Cos(a)*r,Mathf.Sin(a)*r);}
                 Stroke(points,tint,.12f,.65f,false,1.8f).transform.position=point;

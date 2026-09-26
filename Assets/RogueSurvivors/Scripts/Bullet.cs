@@ -20,6 +20,7 @@ namespace RogueSurvivors
             if(!enemy) WeaponCastVisual.Show("bolt",transform.position,heading);
             damage = power; speed = velocity; pierce = penetration; hostile = enemy; owner = source; cosmetic = visualOnly;
             expires = Time.time + (enemy ? 7 : 2.2f);
+            var appearance=GetComponent<ProjectileAppearance>();if(!appearance)appearance=gameObject.AddComponent<ProjectileAppearance>();appearance.Configure(enemy);
             foreach (var renderer in GetComponentsInChildren<SpriteRenderer>()) { renderer.sortingLayerName="Projectiles"; renderer.sortingOrder=enemy?160:10; }
             transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             gameObject.layer = LayerMask.NameToLayer(enemy ? "EnemyBullet" : "PlayerBullet");
@@ -37,7 +38,7 @@ namespace RogueSurvivors
             {
                 var player = other.GetComponent<PlayerHealth>();
                 if (!player || !player.IsLocal || !player.Alive) return;
-                player.Damage(damage); Destroy(gameObject);
+                PaintedImpact.Show(9,transform.position,.65f,.18f); player.Damage(damage); Destroy(gameObject);
             }
             else
             {

@@ -9,7 +9,9 @@ namespace RogueSurvivors
         PlayerHealth owner;
         bool cosmetic;
         public void Launch(Vector2 heading, float power, float area, PlayerHealth source, bool visualOnly)
-        { direction = heading.normalized; damage = power; radius = area; owner = source; cosmetic = visualOnly; expires = Time.time + 4; }
+        { direction = heading.normalized; damage = power; radius = area; owner = source; cosmetic = visualOnly; expires = Time.time + 4;
+            var sprite=GetComponentInChildren<SpriteRenderer>();var art=BattleArt.Effect(0);
+            if(sprite && art){sprite.sprite=art;sprite.color=Color.white;sprite.transform.localScale=Vector3.one*.8f;sprite.sortingLayerName="Projectiles";sprite.sortingOrder=15;} }
         void Update()
         {
             Vector2 previous = transform.position; Vector2 next = previous + direction * (9 * Time.deltaTime);
@@ -24,7 +26,7 @@ namespace RogueSurvivors
         }
         void Explode()
         {
-            EffectsService.Instance?.Burst(transform.position, new Color(1, .5f, .1f));
+            PaintedImpact.Show(0,transform.position,radius*1.65f,.42f,0,90); EffectsService.Instance?.Burst(transform.position, new Color(1, .5f, .1f));
             if (!cosmetic) foreach (var enemy in new List<EnemyHealth>(EnemyHealth.Active))
                 if (enemy && enemy.Alive && Vector2.Distance(enemy.transform.position, transform.position) <= radius + (enemy.IsBoss ? 1 : .3f))
                     enemy.Damage(damage, (enemy.transform.position - transform.position).normalized, owner, CombatElement.Fire);

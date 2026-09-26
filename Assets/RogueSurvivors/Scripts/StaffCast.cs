@@ -43,7 +43,8 @@ namespace RogueSurvivors
         }
         void ImpactVisual(Vector2 point,float radius,Color c,int index)
         {
-            int count=4+tier*2;
+            PaintedImpact.Show(BattleArt.ElementIndex(element),point,radius*1.45f,.42f,0,element==CombatElement.Dark?90:0);
+            int count=3+tier;
             if(element==CombatElement.Light) {
                 // 槍の穂先と翼状の光片。進化すると二重の聖印を残す。
                 Vector2 side=new Vector2(-heading.y,heading.x);
@@ -60,15 +61,16 @@ namespace RogueSurvivors
                 for(int i=0;i<3;i++) {
                     var wave=new Vector3[18];
                     for(int j=0;j<wave.Length;j++) {float a=j*Mathf.PI/(wave.Length-1);wave[j]=point+new Vector2(Mathf.Cos(a)*radius,Mathf.Sin(a)*radius*.55f+i*.17f);}
-                    CombatFx.Stroke(wave,i==2?Color.white:c,i==1?.2f:.065f,.45f);
+                    Color waveColor=i==2?new Color(1,1,1,.55f):new Color(c.r,c.g,c.b,.6f);
+                    CombatFx.Stroke(wave,waveColor,i==1?.12f:.045f,.45f);
                 }
                 for(int i=0;i<count;i++) {Vector2 d=Quaternion.Euler(0,0,i*360f/count)*Vector2.right;CombatMote.Create(point+d*.3f,d*3+Vector2.up,c,new Vector2(.18f,.34f),.5f);}
             } else if(element==CombatElement.Wood||element==CombatElement.Earth) {
                 for(int i=0;i<count;i++) {
                     float a=i*Mathf.PI*2/count; Vector2 d=new Vector2(Mathf.Cos(a),Mathf.Sin(a)); Vector2 at=point+d*radius*.65f;
-                    if(element==CombatElement.Earth) {CombatMote.Create(at,Vector2.up*.5f,c,new Vector2(.45f,.8f+tier*.16f),.6f,2);CombatMote.Create(at+d*.3f,d*3,c,new Vector2(.17f,.23f),.5f,2,80);}
+                    if(element==CombatElement.Earth) {CombatMote.Create(at,Vector2.up*.5f,c,new Vector2(.35f,.4f+tier*.08f),.6f,2);CombatMote.Create(at+d*.3f,d*3,c,new Vector2(.17f,.23f),.5f,2,80);}
                     else {
-                        CombatMote.Create(at,Vector2.up*.4f,c,new Vector2(.24f,.8f+tier*.12f),.6f);
+                        CombatMote.Create(at,Vector2.up*.4f,c,new Vector2(.24f,.4f+tier*.05f),.6f);
                         CombatMote.Create(at+Vector2.up*.4f,d*2,Color.Lerp(c,Color.white,.2f),new Vector2(.35f,.5f),.65f,1,100);
                     }
                 }
@@ -88,14 +90,6 @@ namespace RogueSurvivors
             if(element==CombatElement.Ice) {
                 for(int i=0;i<5+tier*2;i++) { Vector2 d=Quaternion.Euler(0,0,i*360f/(5+tier*2))*Vector2.right; CombatFx.Shard(point+d*.3f,d*3,c,.5f+tier*.12f,.4f); }
             }
-            else if(element==CombatElement.Wood || element==CombatElement.Earth) {
-                for(int i=0;i<3+tier*2;i++) {
-                    float a=i*Mathf.PI*2/(3+tier*2); Vector2 basePoint=point+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius*.7f;
-                    float height=(element==CombatElement.Earth?1.3f:.9f)+tier*.25f;
-                    var spike=CombatFx.Stroke(new[]{Vector3.zero,new Vector3(-.24f,.15f),new Vector3(.1f,height),new Vector3(.33f,.15f)},c,element==CombatElement.Earth?.22f:.12f,.48f,true);
-                    spike.transform.position=basePoint;
-                }
-            }
             else if(element==CombatElement.Light || element==CombatElement.Wind) {
                 for(int i=0;i<1+tier;i++) {
                     Vector2 offset=side*(i-tier*.5f)*.4f;
@@ -104,7 +98,7 @@ namespace RogueSurvivors
                 }
                 if(evolved) CombatFx.Ring(target,2,Color.white,.5f,1,.15f,8);
             }
-            else { CombatFx.Ring(point,radius,c,.45f,element==CombatElement.Dark?-.9f:.8f,.18f); if(element==CombatElement.Dark && index==1) CombatFx.Reaction(7,element,point); }
+            else if(element==CombatElement.Water || element==CombatElement.Dark) { CombatFx.Ring(point,radius,new Color(c.r,c.g,c.b,.3f),.45f,element==CombatElement.Dark?-.9f:.2f,.07f); if(element==CombatElement.Dark && index==1) CombatFx.Reaction(7,element,point); }
             ImpactVisual(point,radius,c,index);
             if(!source || !source.IsLocal || !source.Alive || power<=0) return;
             foreach(var enemy in new List<EnemyHealth>(EnemyHealth.Active)) {

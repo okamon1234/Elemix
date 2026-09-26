@@ -30,6 +30,7 @@ namespace RogueSurvivors
             for(int i=0;i<5;i++) {Vector2 d=Quaternion.Euler(0,0,fx.angle-65+i*32.5f)*Vector2.right;CombatMote.Create(target,d*3.5f,tint,new Vector2(.12f,.4f),.28f);}
             CombatMote.Create(target,Vector2.zero,Color.white,new Vector2(.48f,.48f),.18f,3);
             if(kind==2||kind==4) CombatFx.Ring(target,.35f,tint,.35f,3,.13f,kind==2?8:24);
+            PaintedImpact.Show(9,origin+fx.heading*fx.reach*.55f,fx.reach*1.1f,.23f,fx.angle,kind==6?100:0);
             fx.Pose(0);
         }
         void Pose(float t)

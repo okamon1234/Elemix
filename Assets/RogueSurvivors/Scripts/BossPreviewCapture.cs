@@ -123,7 +123,7 @@ namespace RogueSurvivors
             File.WriteAllText(Path.Combine(folder,"描画完了.txt"),"ホーム・攻略・合体ガイド・4ボス3形態・属性攻撃・10合体2レベル2時点・反応・結晶・強化カードを1280×720で描画。");
             Application.Quit();
         }
-        static void SaveFrame(string path)
+        public static void SaveFrame(string path)
         {
             var camera=Camera.main; var target=new RenderTexture(1280,720,24,RenderTextureFormat.ARGB32); target.Create();
             var previous=camera.targetTexture; var previousActive=RenderTexture.active; float aspect=camera.aspect;

@@ -65,6 +65,28 @@ namespace RogueSurvivors
             }
             foreach(var weapon in WeaponCatalog.All) Check(ArsenalArt.Weapon(weapon.Id),"Painted weapon sprite loaded: "+weapon.Id);
             for(int art=0;art<10;art++) Check(ArsenalArt.Fusion(art),"Painted fusion sprite loaded: "+art);
+            for(int role=0;role<5;role++)for(int frame=0;frame<3;frame++)
+                Check(BattleArt.Enemy((EnemyRole)role,frame),"Painted enemy animation frame: "+role+"/"+frame);
+            for(int art=0;art<12;art++)Check(BattleArt.Effect(art),"Painted attack texture loaded: "+art);
+            for(int impact=0;impact<100;impact++)PaintedImpact.Show(0,new Vector2(1000,1000),2,.1f);
+            Check(PaintedImpact.ActiveCount<=72,"Painted effects enforce the simultaneous visual limit");
+            yield return new WaitForSeconds(.2f);
+            Check(PaintedImpact.ActiveCount==0,"Painted effects release their active budget after expiry");
+            var artArcher=Instantiate(Resources.Load<EnemyHealth>("RogueSurvivors/EnemyArcher"),new Vector2(1000,1000),Quaternion.identity);
+            artArcher.GetComponent<EnemyAI>().enabled=false;
+            yield return null;
+            Check(artArcher.GetComponentInChildren<SpriteRenderer>().sprite==BattleArt.Enemy(EnemyRole.Archer),"Existing archer prefab uses painted idle sprite");
+            Check(artArcher.GetComponent<CircleCollider2D>().radius==Resources.Load<EnemyHealth>("RogueSurvivors/EnemyArcher").GetComponent<CircleCollider2D>().radius,"Painted enemy keeps its original hitbox");
+            var bow=artArcher.GetComponent<EnemyCombat>();bow.OverrideMovement(Vector2.right,6,out _);
+            Check(bow.WindingUp && bow.AimDirection==Vector2.right,"Archer announces a fixed direction before firing");
+            yield return new WaitForSeconds(.38f);bow.OverrideMovement(Vector2.left,6,out _);
+            Check(!bow.WindingUp,"Archer releases the shot after the visible windup");
+            bool paintedArrow=false;
+            foreach(var arrow in FindObjectsByType<Bullet>(FindObjectsSortMode.None))if(arrow.transform.position.x>990) {
+                var renderer=arrow.GetComponentInChildren<SpriteRenderer>();paintedArrow|=renderer.sprite==BattleArt.Effect(10) && renderer.sortingOrder>=160;
+                Destroy(arrow.gameObject);
+            }
+            Check(paintedArrow,"Enemy arrow uses new artwork above allied effects");Destroy(artArcher.gameObject);
             Check(FindFirstObjectByType<MapObstacles>() && FindFirstObjectByType<MapObstacles>().GetComponentsInChildren<BoxCollider2D>().Length > 0, "Ruin obstacle chunks populate SoloScene");
             var baseline = new PlayerDataData(); baseline.weapons.Add(new WeaponSaveData("bolt", 1)); stats.Restore(baseline);
             var penaltyBuild = baseline.NetworkCopy(); penaltyBuild.level = 4; stats.Restore(penaltyBuild);

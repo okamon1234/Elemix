@@ -35,6 +35,7 @@ namespace RogueSurvivors
                 float a=startAngle+sweep*previous,b=startAngle+sweep*t;
                 if(angle<Mathf.Min(a,b)-22||angle>Mathf.Max(a,b)+22)continue;
                 struck.Add(enemy);enemy.Damage(damage,delta.normalized,owner);owner.GrantShield(owner.Maximum*.035f,.8f);
+                PaintedImpact.Show(9,enemy.transform.position,.75f,.18f,baseAngle);
                 CombatMote.Create(enemy.transform.position,Vector2.zero,new Color(.95f,.9f,.7f),new Vector2(.35f,.35f),.18f,3);
             }
             if(age>=.36f)Destroy(gameObject);
