@@ -97,9 +97,9 @@ namespace RogueSurvivors
             Check(artArcher.GetComponentInChildren<SpriteRenderer>().sprite==BattleArt.Enemy(EnemyRole.Archer),"Existing archer prefab uses painted idle sprite");
             Check(artArcher.GetComponent<CircleCollider2D>().radius==Resources.Load<EnemyHealth>("RogueSurvivors/EnemyArcher").GetComponent<CircleCollider2D>().radius,"Painted enemy keeps its original hitbox");
             var bow=artArcher.GetComponent<EnemyCombat>();bow.OverrideMovement(Vector2.right,6,out _);
-            Check(bow.WindingUp && bow.AimDirection==Vector2.right,"Archer announces a fixed direction before firing");
+            Check(bow.WindingUp && bow.AimDirection==Vector2.right,"Archer locks a fixed direction before firing");
             yield return new WaitForSeconds(.38f);bow.OverrideMovement(Vector2.left,6,out _);
-            Check(!bow.WindingUp,"Archer releases the shot after the visible windup");
+            Check(!bow.WindingUp,"Archer releases the shot after the windup");
             bool paintedArrow=false;
             foreach(var arrow in FindObjectsByType<Bullet>(FindObjectsSortMode.None))if(arrow.transform.position.x>990) {
                 var renderer=arrow.GetComponentInChildren<SpriteRenderer>();paintedArrow|=renderer.sprite==BattleArt.Effect(10) && renderer.sortingOrder>=160;

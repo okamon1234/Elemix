@@ -45,7 +45,7 @@ namespace RogueSurvivors
             yield return new WaitForSecondsRealtime(.8f);
             var archer=Instantiate(Resources.Load<EnemyHealth>("RogueSurvivors/EnemyArcher"),new Vector3(-4,2),Quaternion.identity);
             var charger=Instantiate(Resources.Load<EnemyHealth>("RogueSurvivors/EnemyCharger"),new Vector3(4,2),Quaternion.identity);
-            HUDController.Instance.Toast("弓兵は射撃前に照準、突進獣は進行範囲を予告");yield return new WaitForSecondsRealtime(.15f);BossPreviewCapture.SaveFrame(Path.Combine(folder,"雑魚の攻撃予告.png"));
+            HUDController.Instance.Toast("雑魚の攻撃予告を非表示");yield return new WaitForSecondsRealtime(.15f);BossPreviewCapture.SaveFrame(Path.Combine(folder,"雑魚の攻撃準備.png"));
             yield return new WaitForSecondsRealtime(.3f);BossPreviewCapture.SaveFrame(Path.Combine(folder,"敵の矢.png"));
             camera.orthographicSize=7;
             for(int i=0;i<45;i++) {
@@ -57,7 +57,7 @@ namespace RogueSurvivors
             HUDController.Instance.Toast("");
             yield return new WaitForSecondsRealtime(2);BossPreviewCapture.SaveFrame(Path.Combine(folder,"ソロ混戦.png"));
             yield return new WaitForSecondsRealtime(10);BossPreviewCapture.SaveFrame(Path.Combine(folder,"ソロ混戦_後半.png"));
-            File.WriteAllText(Path.Combine(folder,"描画完了.txt"),"雑魚5種類・歩行・攻撃素材・予告・矢・混戦2時点を実際のURP描画で確認。");Application.Quit();
+            File.WriteAllText(Path.Combine(folder,"描画完了.txt"),"雑魚5種類・歩行・攻撃素材・攻撃準備・矢・混戦2時点を実際のURP描画で確認。");Application.Quit();
         }
     }
 }

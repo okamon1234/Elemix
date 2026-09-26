@@ -12,7 +12,6 @@ namespace RogueSurvivors
         public bool Dashing => role==EnemyRole.Charger && Time.time>=windupEnd && Time.time<dashEnd;
         public bool WindingUp => role==EnemyRole.Charger ? Time.time<windupEnd : role==EnemyRole.Archer && drawingBow;
         public Vector2 AimDirection => dashDirection;
-        void Awake(){if((role==EnemyRole.Archer || role==EnemyRole.Charger) && !GetComponent<EnemyAttackCue>())gameObject.AddComponent<EnemyAttackCue>();}
         public bool OverrideMovement(Vector2 desired, float distance, out Vector2 velocity)
         {
             velocity = Vector2.zero;
@@ -39,8 +38,7 @@ namespace RogueSurvivors
                 if (Time.time < dashEnd) { velocity = dashDirection * 7; return true; }
                 if (distance < 10 && Time.time >= nextAttack) {
                     dashDirection = desired; windupEnd = Time.time + .7f; dashEnd = windupEnd + .65f;
-                    EffectsService.Instance?.Popup(transform.position + Vector3.up * .6f, "!", new Color(1, .75f, .25f));
-                    nextAttack = dashEnd + 2.5f; GetComponent<HitFeedback>()?.Flash(); return true;
+                    nextAttack = dashEnd + 2.5f; return true;
                 }
             }
             return false;
