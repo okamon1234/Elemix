@@ -49,6 +49,25 @@ namespace RogueSurvivors
         }
         void Check(bool condition, string label)
         { if (!condition) throw new InvalidOperationException(label); report.checks.Add(label); Debug.Log("ROGUE_CHECK: " + label); }
+        static bool MapNavigable(SoloMapKind kind,Vector2Int key)
+        {
+            const int n=33;var blocked=new bool[n,n];var visited=new bool[n,n];var bounds=new List<Rect>();
+            foreach(var prop in SoloMapLayout.Generate(kind,key))foreach(var rect in SoloMapLayout.Bounds(prop))bounds.Add(new Rect(rect.xMin-.45f,rect.yMin-.45f,rect.width+.9f,rect.height+.9f));
+            int total=0;for(int y=0;y<n;y++)for(int x=0;x<n;x++) {
+                Vector2 point=(Vector2)key*24+new Vector2(-12+x*.75f,-12+y*.75f);
+                foreach(var rect in bounds)if(rect.Contains(point)){blocked[x,y]=true;break;}
+                if(!blocked[x,y])total++;
+            }
+            var queue=new Queue<Vector2Int>();queue.Enqueue(new Vector2Int(16,16));visited[16,16]=true;int count=0;
+            while(queue.Count>0) {
+                var cell=queue.Dequeue();if(blocked[cell.x,cell.y])continue;count++;
+                foreach(var d in new[]{Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right}) {
+                    var next=cell+d;if(next.x<0 || next.x>=n || next.y<0 || next.y>=n || visited[next.x,next.y] || blocked[next.x,next.y])continue;
+                    visited[next.x,next.y]=true;queue.Enqueue(next);
+                }
+            }
+            return total==count;
+        }
         IEnumerator Tests()
         {
             var player = PlayerHealth.Local;
@@ -87,6 +106,25 @@ namespace RogueSurvivors
                 Destroy(arrow.gameObject);
             }
             Check(paintedArrow,"Enemy arrow uses new artwork above allied effects");Destroy(artArcher.gameObject);
+            var soloMap=SoloMap.Instance;Check(soloMap,"Solo map initializes before gameplay");
+            for(int mapIndex=0;mapIndex<2;mapIndex++) {
+                var kind=(SoloMapKind)mapIndex;Check(MapArt.Ground(kind),"Painted map floor: "+kind);soloMap.Initialize(kind);
+                Check(soloMap.ChunkCount==9,"Solo map keeps nine active chunks: "+kind);
+                Check(!Physics2D.OverlapCircle(Vector2.zero,.6f,LayerMask.GetMask("World")),"Map origin is safe: "+kind);
+                bool corridor=true;for(int step=-70;step<=70;step++)corridor&=!Physics2D.OverlapCircle(new Vector2(step*.5f,0),.45f,LayerMask.GetMask("World")) && !Physics2D.OverlapCircle(new Vector2(0,step*.5f),.45f,LayerMask.GetMask("World"));
+                Check(corridor,"Connected roads cross chunk seams without blocking: "+kind);
+                for(int y=-3;y<=3;y++)for(int x=-3;x<=3;x++)Check(MapNavigable(kind,new Vector2Int(x,y)),"Walkable district has no isolated pockets: "+kind+"/"+x+","+y);
+                var wanted=soloMap.ObstacleBounds[0].center;Vector2 open=soloMap.FindOpenSpot(wanted);
+                Check(!Physics2D.OverlapCircle(open,.6f,LayerMask.GetMask("World")),"Enemy spawn can move out of terrain: "+kind);
+                var mapBefore=SoloMapLayout.Generate(kind,Vector2Int.zero);soloMap.RefreshAround(new Vector2(-240,240));
+                Check(soloMap.ChunkCount==9,"Distant movement unloads old map chunks: "+kind);soloMap.RefreshAround(Vector2.zero);
+                var mapAfter=SoloMapLayout.Generate(kind,Vector2Int.zero);bool same=mapBefore.Count==mapAfter.Count;
+                for(int i=0;i<mapBefore.Count && same;i++)same=mapBefore[i].Art==mapAfter[i].Art && mapBefore[i].Position==mapAfter[i].Position;
+                Check(same,"Revisiting map reconstructs identical terrain: "+kind);
+            }
+            for(int prop=0;prop<8;prop++)Check(MapArt.Prop(prop),"Map prop texture: "+prop);
+            Check(SoloMapLayout.Key(new Vector2(-12.1f,-12.1f))==new Vector2Int(-1,-1) && SoloMapLayout.Key(new Vector2(11.9f,11.9f))==Vector2Int.zero,"Map chunk boundaries work with negative coordinates");
+            soloMap.Initialize(SoloMapCatalog.Selected);
             Check(FindFirstObjectByType<MapObstacles>() && FindFirstObjectByType<MapObstacles>().GetComponentsInChildren<BoxCollider2D>().Length > 0, "Ruin obstacle chunks populate SoloScene");
             var baseline = new PlayerDataData(); baseline.weapons.Add(new WeaponSaveData("bolt", 1)); stats.Restore(baseline);
             var penaltyBuild = baseline.NetworkCopy(); penaltyBuild.level = 4; stats.Restore(penaltyBuild);

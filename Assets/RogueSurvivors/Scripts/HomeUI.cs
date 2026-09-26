@@ -6,7 +6,7 @@ namespace RogueSurvivors
     {
         Text selection;
         Button mageChoice;
-        Text preparation;
+        Text preparation; Text mapSelection;
         Text bossSelection;
         readonly Button[] cards = new Button[CharacterCatalog.All.Length];
         void Start()
@@ -36,6 +36,10 @@ namespace RogueSurvivors
             UIFactory.Button("時間短縮", transform, new Vector2(.5f, 0), new Vector2(-185, 188), new Vector2(64, 36), "−", () => AdjustTime(-30));
             UIFactory.Button("時間延長", transform, new Vector2(.5f, 0), new Vector2(185, 188), new Vector2(64, 36), "＋", () => AdjustTime(30));
             AdjustTime(0);
+            var maps=gameObject.AddComponent<MapSelectionUI>();
+            var mapButton=UIFactory.Button("出撃マップ",transform,new Vector2(.5f,0),new Vector2(-430,188),new Vector2(310,40),"",()=>maps.Open(RefreshMap));
+            mapSelection=mapButton.GetComponentInChildren<Text>();mapSelection.fontSize=18;RefreshMap();
+            UIFactory.Label("地形の案内",transform,new Vector2(.5f,0),new Vector2(425,188),new Vector2(330,38),"マップごとに地形と逃げ道が変化",15,null,TextAnchor.MiddleCenter);
             UIFactory.Button("出撃", transform, new Vector2(.5f, 0), new Vector2(-290, 108), new Vector2(340, 62), "このキャラクターで出撃", () => GameManager.Instance.StartSolo());
             UIFactory.Button("ボスロビー", transform, new Vector2(.5f, 0), new Vector2(110, 108), new Vector2(420, 62), "保存したビルドでボス戦へ", () => GameManager.Instance.OpenLobby());
             UIFactory.Button("練習", transform, new Vector2(.5f, 0), new Vector2(450, 108), new Vector2(200, 62), "ボス戦の練習", () => NetworkManager.Instance.Practice());
@@ -52,6 +56,7 @@ namespace RogueSurvivors
             guideButton.GetComponentInChildren<Text>().fontSize=16;
             Select(GameManager.Instance.SelectedCharacter);
         }
+        void RefreshMap(){mapSelection.text="マップ："+SoloMapCatalog.Name(SoloMapCatalog.Selected)+"　変更 ▷";}
         void RefreshMage() { mageChoice.gameObject.SetActive(GameManager.Instance.SelectedCharacter == "mage"); mageChoice.GetComponentInChildren<Text>().text = "初期属性：" + WeaponCatalog.Find(MageLoadout.SelectedWeapon).Name + " Lv2　変更 ▷"; mageChoice.GetComponentInChildren<Text>().fontSize=18; }
         void CycleBoss() { BossCatalog.Selection = BossCatalog.Selection >= 3 ? -1 : BossCatalog.Selection + 1; RefreshBoss(); }
         void RefreshBoss() { bossSelection.text = "討伐：" + (BossCatalog.Selection < 0 ? "ランダム" : BossCatalog.Names[BossCatalog.Selection]) + " ▷"; }

@@ -34,11 +34,12 @@ namespace RogueSurvivors
             obstacles.obstaclePrefab = Resources.Load<GameObject>("RogueSurvivors/RuinPillar"); obstacles.arena = mode == RunMode.Boss;
             if (mode == RunMode.Solo)
             {
+                canvasGO.AddComponent<SoloMinimap>();
                 var player = Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
                 player.GetComponent<PlayerStats>().Restore(CharacterCatalog.CreateBuild(GameManager.Instance.SelectedCharacter, MageLoadout.SelectedWeapon));
                 BindLocal(player.GetComponent<PlayerHealth>(), true);
                 var spawner = new GameObject("EnemySpawner").AddComponent<EnemySpawner>(); spawner.prefab = enemyPrefab;
-                HUDController.Instance.Toast("武器を育ててボスに挑もう　／　時間が経つほど敵が強くなります");
+                HUDController.Instance.Toast(SoloMapCatalog.Name(SoloMapCatalog.Selected)+"へ出撃　／　地形を使って群れをかわそう");
             }
             else
             {

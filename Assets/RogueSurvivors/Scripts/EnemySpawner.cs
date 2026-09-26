@@ -38,6 +38,7 @@ namespace RogueSurvivors
             if (kind >= 0 && variants[kind]) chosen = variants[kind];
             Vector2 world = (Vector2)camera.transform.position + position;
             for (int attempt = 0; attempt < 8 && Physics2D.OverlapCircle(world, .6f, LayerMask.GetMask("World")); attempt++) world += Random.insideUnitCircle * 2;
+            if(SoloMap.Instance)world=SoloMap.Instance.FindOpenSpot(world);
             var enemy = Instantiate(chosen, world, Quaternion.identity);
             enemy.Scale(HealthGrowth(elapsed));
             if (elapsed >= 60 && Random.value < .18f) {
