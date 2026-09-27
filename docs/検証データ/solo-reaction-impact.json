@@ -1,0 +1,133 @@
+{
+    "runs": [
+        {
+            "character": "ranger",
+            "finalWeapons": "風の弓 Lv8 / 光の槍 Lv4",
+            "seed": 12345,
+            "level": 11,
+            "kills": 322,
+            "deaths": 3,
+            "experience": 0,
+            "seconds": 120.0005111694336,
+            "deathEvents": [
+                "81.4秒・死亡処理後Lv9・風の弓 Lv8 / 光の槍 Lv2",
+                "109.3秒・死亡処理後Lv12・風の弓 Lv8 / 光の槍 Lv5",
+                "118.9秒・死亡処理後Lv11・風の弓 Lv8 / 光の槍 Lv4"
+            ]
+        },
+        {
+            "character": "mage",
+            "finalWeapons": "炎の玉 Lv5 / 雷の指輪 Lv3 / 木の種 Lv4 / 水のオーブ Lv4",
+            "seed": 12345,
+            "level": 15,
+            "kills": 357,
+            "deaths": 3,
+            "experience": 48,
+            "seconds": 120.00780487060547,
+            "deathEvents": [
+                "71.0秒・死亡処理後Lv7・炎の玉 Lv2 / 雷の指輪 Lv1 / 木の種 Lv2 / 水のオーブ Lv3",
+                "82.5秒・死亡処理後Lv6・炎の玉 Lv1 / 雷の指輪 Lv1 / 木の種 Lv2 / 水のオーブ Lv3",
+                "105.2秒・死亡処理後Lv11・炎の玉 Lv3 / 雷の指輪 Lv2 / 木の種 Lv3 / 水のオーブ Lv4"
+            ]
+        },
+        {
+            "character": "warden",
+            "finalWeapons": "円盤鎌 Lv8 / 鞭 Lv8 / ブーメラン Lv1",
+            "seed": 12345,
+            "level": 23,
+            "kills": 366,
+            "deaths": 0,
+            "experience": 2,
+            "seconds": 120.0033950805664,
+            "deathEvents": []
+        },
+        {
+            "character": "knight",
+            "finalWeapons": "鎖鉄球 Lv3 / 大剣 Lv4",
+            "seed": 12345,
+            "level": 20,
+            "kills": 354,
+            "deaths": 1,
+            "experience": 54,
+            "seconds": 120.00226593017578,
+            "deathEvents": [
+                "104.8秒・死亡処理後Lv15・槍 Lv3 / ハンマー Lv4 / 大剣 Lv2"
+            ]
+        },
+        {
+            "character": "lancer",
+            "finalWeapons": "ハルバード Lv8 / ハンマー Lv2 / 盾 Lv2",
+            "seed": 12345,
+            "level": 18,
+            "kills": 342,
+            "deaths": 1,
+            "experience": 80,
+            "seconds": 120.00111389160156,
+            "deathEvents": [
+                "115.2秒・死亡処理後Lv18・ハルバード Lv8 / ハンマー Lv2 / 盾 Lv2"
+            ]
+        },
+        {
+            "character": "ranger",
+            "finalWeapons": "風の弓 Lv8 / 炎の玉 Lv7 / 木の種 Lv8",
+            "seed": 54321,
+            "level": 22,
+            "kills": 371,
+            "deaths": 0,
+            "experience": 54,
+            "seconds": 120.0029067993164,
+            "deathEvents": []
+        },
+        {
+            "character": "mage",
+            "finalWeapons": "炎の玉 Lv4 / 雷の指輪 Lv2 / 木の種 Lv2 / 水のオーブ Lv5",
+            "seed": 54321,
+            "level": 12,
+            "kills": 364,
+            "deaths": 3,
+            "experience": 57,
+            "seconds": 120.0020751953125,
+            "deathEvents": [
+                "73.7秒・死亡処理後Lv8・炎の玉 Lv3 / 雷の指輪 Lv1 / 木の種 Lv1 / 水のオーブ Lv4",
+                "89.6秒・死亡処理後Lv9・炎の玉 Lv3 / 雷の指輪 Lv2 / 木の種 Lv1 / 水のオーブ Lv4",
+                "104.2秒・死亡処理後Lv8・炎の玉 Lv3 / 雷の指輪 Lv1 / 木の種 Lv1 / 水のオーブ Lv4"
+            ]
+        },
+        {
+            "character": "warden",
+            "finalWeapons": "回転大斧 Lv8 / 短剣 Lv2 / ナックル Lv4",
+            "seed": 54321,
+            "level": 20,
+            "kills": 363,
+            "deaths": 1,
+            "experience": 1,
+            "seconds": 120.00091552734375,
+            "deathEvents": [
+                "99.5秒・死亡処理後Lv15・回転大斧 Lv8 / ナックル Lv1"
+            ]
+        },
+        {
+            "character": "knight",
+            "finalWeapons": "槍 Lv5 / 斧 Lv3 / ハンマー Lv1 / 大剣 Lv8",
+            "seed": 54321,
+            "level": 23,
+            "kills": 369,
+            "deaths": 0,
+            "experience": 25,
+            "seconds": 120.00033569335938,
+            "deathEvents": []
+        },
+        {
+            "character": "lancer",
+            "finalWeapons": "ハルバード Lv4 / 斧 Lv3 / スパイクシールド Lv2",
+            "seed": 54321,
+            "level": 22,
+            "kills": 348,
+            "deaths": 0,
+            "experience": 100,
+            "seconds": 120.00066375732422,
+            "deathEvents": []
+        }
+    ],
+    "error": ""
+}

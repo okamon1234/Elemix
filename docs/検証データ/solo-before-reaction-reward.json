@@ -1,0 +1,137 @@
+{
+    "runs": [
+        {
+            "character": "ranger",
+            "finalWeapons": "風の弓 Lv8 / 光の槍 Lv4",
+            "seed": 12345,
+            "level": 11,
+            "kills": 303,
+            "deaths": 3,
+            "experience": 18,
+            "seconds": 120.00072479248047,
+            "deathEvents": [
+                "96.9秒・死亡処理後Lv13・風の弓 Lv8 / 光の槍 Lv6",
+                "105.4秒・死亡処理後Lv11・風の弓 Lv8 / 光の槍 Lv4",
+                "115.1秒・死亡処理後Lv11・風の弓 Lv8 / 光の槍 Lv4"
+            ]
+        },
+        {
+            "character": "mage",
+            "finalWeapons": "炎の玉 Lv1 / 雷の指輪 Lv3 / 木の種 Lv4 / 水のオーブ Lv3",
+            "seed": 12345,
+            "level": 10,
+            "kills": 328,
+            "deaths": 3,
+            "experience": 0,
+            "seconds": 120.00141143798828,
+            "deathEvents": [
+                "92.2秒・死亡処理後Lv12・炎の玉 Lv1 / 雷の指輪 Lv3 / 木の種 Lv5 / 水のオーブ Lv4",
+                "110.2秒・死亡処理後Lv12・炎の玉 Lv1 / 雷の指輪 Lv3 / 木の種 Lv5 / 水のオーブ Lv4",
+                "119.0秒・死亡処理後Lv10・炎の玉 Lv1 / 雷の指輪 Lv3 / 木の種 Lv4 / 水のオーブ Lv3"
+            ]
+        },
+        {
+            "character": "warden",
+            "finalWeapons": "ハンマー Lv2 / 剣 Lv4 / 盾 Lv2 / 円盤鎌 Lv8",
+            "seed": 12345,
+            "level": 22,
+            "kills": 353,
+            "deaths": 0,
+            "experience": 55,
+            "seconds": 120.00605010986328,
+            "deathEvents": []
+        },
+        {
+            "character": "knight",
+            "finalWeapons": "大剣 Lv8 / 連射ボウガン Lv2",
+            "seed": 12345,
+            "level": 23,
+            "kills": 362,
+            "deaths": 0,
+            "experience": 57,
+            "seconds": 120.00389862060547,
+            "deathEvents": []
+        },
+        {
+            "character": "lancer",
+            "finalWeapons": "槍 Lv6 / 投擲戦斧 Lv3 / 剣 Lv3 / 盾 Lv1",
+            "seed": 12345,
+            "level": 19,
+            "kills": 364,
+            "deaths": 1,
+            "experience": 79,
+            "seconds": 120.0032730102539,
+            "deathEvents": [
+                "93.0秒・死亡処理後Lv13・槍 Lv4 / 投擲戦斧 Lv2 / 剣 Lv1"
+            ]
+        },
+        {
+            "character": "ranger",
+            "finalWeapons": "風の弓 Lv8 / 土のハンマー Lv8 / 水のオーブ Lv5",
+            "seed": 54321,
+            "level": 21,
+            "kills": 343,
+            "deaths": 0,
+            "experience": 65,
+            "seconds": 120.00362396240235,
+            "deathEvents": []
+        },
+        {
+            "character": "mage",
+            "finalWeapons": "木の種 Lv2 / 水のオーブ Lv7",
+            "seed": 54321,
+            "level": 8,
+            "kills": 326,
+            "deaths": 6,
+            "experience": 13,
+            "seconds": 120.00182342529297,
+            "deathEvents": [
+                "63.0秒・死亡処理後Lv6・水のオーブ Lv7",
+                "75.8秒・死亡処理後Lv6・水のオーブ Lv7",
+                "86.3秒・死亡処理後Lv6・水のオーブ Lv7",
+                "96.1秒・死亡処理後Lv4・水のオーブ Lv5",
+                "105.4秒・死亡処理後Lv6・水のオーブ Lv7",
+                "116.7秒・死亡処理後Lv8・木の種 Lv2 / 水のオーブ Lv7"
+            ]
+        },
+        {
+            "character": "warden",
+            "finalWeapons": "回転大斧 Lv8 / ボウガン Lv2 / ブーメラン Lv2",
+            "seed": 54321,
+            "level": 18,
+            "kills": 353,
+            "deaths": 2,
+            "experience": 51,
+            "seconds": 120.00303649902344,
+            "deathEvents": [
+                "69.7秒・死亡処理後Lv9・回転大斧 Lv3",
+                "111.8秒・死亡処理後Lv16・回転大斧 Lv8 / ボウガン Lv1 / ブーメラン Lv1"
+            ]
+        },
+        {
+            "character": "knight",
+            "finalWeapons": "斧 Lv3 / ハンマー Lv4 / 大剣 Lv8",
+            "seed": 54321,
+            "level": 21,
+            "kills": 349,
+            "deaths": 0,
+            "experience": 42,
+            "seconds": 120.0,
+            "deathEvents": []
+        },
+        {
+            "character": "lancer",
+            "finalWeapons": "鎖鉄球 Lv8 / ボウガン Lv3 / ブーメラン Lv3",
+            "seed": 54321,
+            "level": 20,
+            "kills": 358,
+            "deaths": 1,
+            "experience": 9,
+            "seconds": 120.00032806396485,
+            "deathEvents": [
+                "94.1秒・死亡処理後Lv13・鎖鉄球 Lv7"
+            ]
+        }
+    ],
+    "error": ""
+}

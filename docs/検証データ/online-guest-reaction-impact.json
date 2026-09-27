@@ -1,0 +1,33 @@
+{
+    "success": true,
+    "role": "guest",
+    "checks": [
+        "Fusion Shared cloud connection",
+        "Two independent clients joined the same private room",
+        "Synchronized arena load and player/boss spawns",
+        "Remote player movement replicated",
+        "Combined physical weapon effect RPC rendered on guest",
+        "Boss difficulty uses both player builds",
+        "Host selected dragon overrides guest boss selection",
+        "Independent part pings from both players replicated",
+        "Clearing one player's ping preserves the other player's target",
+        "Part pings expire on both clients after eight seconds",
+        "Earth reaction shield replicated to guest owner",
+        "Guest wind and protected earth preserve water without another crystal",
+        "Guest created a seed on authority and received its synchronized state",
+        "Guest third element triggered synchronized hyperbloom",
+        "Consumed seed cleared on guest without duplicate detonation",
+        "Guest close-range weak point hit damages protected core through authority",
+        "Destroyed part automatically hides both players' pings",
+        "Four armor parts and bounded first-break core reward replicated",
+        "Exact part break order replicated to both clients",
+        "Guest attack reached boss authority and HP replicated",
+        "Boss volley RPC rendered on guest",
+        "Five lightning hazard telegraphs created on guest by attack RPC",
+        "Boss identity and third phase replicated on guest",
+        "Third phase selected break route attack state replicated on guest",
+        "Victory state replicated and result displayed",
+        "Runner shutdown and return to home"
+    ],
+    "error": ""
+}

@@ -79,7 +79,7 @@ namespace RogueSurvivors
         }
         public static float EstimateDps(PlayerStats stats,Recipe r)
         {
-            int level=Level(stats,r);float power=PhysicalFusionCombat.Damage(r.Style,level),interval=PhysicalFusionCombat.Interval(r.Style,level);
+            int level=Level(stats,r);float power=PhysicalFusionCombat.BaseDamage(r.Style,level),interval=PhysicalFusionCombat.Interval(r.Style,level);
             float hits=r.Style==0?2:r.Style==1?3:r.Style==2?6+level/2:r.Style==3?2:r.Style==4?2:r.Style==5?3:r.Style==6?1.5f:r.Style==8?2.4f:r.Style==9?(3+level/3)*2:2.5f;
             return power*hits/interval*.75f;
         }

@@ -14,7 +14,7 @@ namespace RogueSurvivors
         public bool Alive => Current > 0;
         public Vector2 Knockback { get; private set; }
         bool died;
-        PlayerHealth meleeFinisher;
+        PlayerHealth meleeFinisher,reactionFinisher;
         void Awake() => Current = maximum;
         void OnEnable() => Active.Add(this);
         void OnDisable() => Active.Remove(this);
@@ -38,19 +38,26 @@ namespace RogueSurvivors
             var bossAI = GetComponent<BossAI>(); if (bossAI && (bossAI.IsTransforming || (bossAI.Phase < 3 && Current <= maximum * .5f))) return;
             var reactions = GetComponent<ElementReaction>();
             if (!reactions) reactions = gameObject.AddComponent<ElementReaction>();
-            if (element == CombatElement.None && GetComponent<EnemyAilment>()) amount *= GetComponent<EnemyAilment>().PhysicalMultiplier;
+            int impact=0;
+            if(element==CombatElement.None && source)amount*=ReactionBalance.PhysicalPower;
+            var ailment=GetComponent<EnemyAilment>();
+            if(element==CombatElement.None && ailment) {
+                amount*=ailment.PhysicalMultiplier;
+                if(ailment.TryShatter()){amount+=ReactionBalance.Power(amount,source)*.8f;impact=16;var network=GetComponent<NetworkEnemySync>();if(network && network.IsNetworked)network.BroadcastReaction(16);else reactions.Show(16);}
+            }
             var affinity = GetComponent<EnemyAffinity>(); if (affinity) amount *= affinity.Multiplier(element);
             amount = reactions.Resolve(amount, element, source, sourceBarrier);
+            if(reactions.LastReaction>0)impact=reactions.LastReaction;
             var parts = GetComponent<BossParts>();
             Vector2 origin = source ? (Vector2)source.transform.position : (Vector2)transform.position - direction;
             bool bypass=false;var reward=GetComponent<BossBreakReward>();
             if(reward && source)amount=reward.Resolve(amount,origin,element==CombatElement.None,false,out bypass);
-            if (parts && !bypass && parts.Absorb(amount * (element == CombatElement.None ? 1.35f : 1), origin)) return;
+            if (parts && !bypass && AbsorbImpact(parts,amount * (element == CombatElement.None ? 1.35f : 1),origin,impact)) return;
             if (bossAI && bossAI.Phase < 3) amount = Mathf.Min(amount, Mathf.Max(0, Current - maximum * .5f));
             meleeFinisher=element==CombatElement.None && source && Vector2.Distance(source.transform.position,transform.position)<=4 ? source : null;
-            ApplyDamage(amount, direction);
+            ApplyDamage(amount, direction,impact,source);
         }
-        public void ReceiveSecondary(float amount, PlayerHealth source)
+        public void ReceiveSecondary(float amount, PlayerHealth source,int reaction=0)
         {
             var sync = GetComponent<NetworkEnemySync>(); if (sync && sync.IsNetworked && !sync.IsAuthority) return;
             if (!Alive || amount <= 0) return;
@@ -58,28 +65,44 @@ namespace RogueSurvivors
             var parts = GetComponent<BossParts>();
             bool bypass=false;var reward=GetComponent<BossBreakReward>();
             if(reward && source)amount=reward.Resolve(amount,source.transform.position,false,true,out bypass);
-            if (parts && !bypass && parts.Absorb(amount, source ? (Vector2)source.transform.position : (Vector2)transform.position)) return;
+            if (parts && !bypass && AbsorbImpact(parts,amount,source ? (Vector2)source.transform.position : (Vector2)transform.position,reaction)) return;
             var bossAI = GetComponent<BossAI>();
             if (bossAI && bossAI.IsTransforming) return;
             if (bossAI && bossAI.Phase < 3) amount = Mathf.Min(amount, Mathf.Max(0, Current - maximum * .5f));
             meleeFinisher=null;
-            ApplyDamage(amount, Vector2.zero);
+            ApplyDamage(amount, Vector2.zero,reaction,source);
         }
         // Raw health mutation for authority state and deterministic verification only.
-        public void ApplyDamage(float amount, Vector2 direction)
+        public void ApplyDamage(float amount, Vector2 direction,int reaction=0,PlayerHealth source=null)
         {
             if (!Alive || amount <= 0) return;
+            reactionFinisher=reaction>0?source:null;
             Current = Mathf.Max(0, Current - amount);
             if (!IsBoss) Knockback = direction * 3.5f;
             GetComponent<HitFeedback>()?.Flash();
-            EffectsService.Instance?.Popup(transform.position, Mathf.CeilToInt(amount).ToString(), Color.white);
+            if(reaction>0)ReportImpact(amount,reaction);else EffectsService.Instance?.Popup(transform.position, Mathf.CeilToInt(amount).ToString(), Color.white);
             if (!Alive) Die(true);
+        }
+        bool AbsorbImpact(BossParts parts,float amount,Vector2 origin,int reaction)
+        {
+            Vector4 before=parts.Health;bool absorbed=parts.Absorb(amount,origin);Vector4 delta=before-parts.Health;
+            if(absorbed)ReportImpact(delta.x+delta.y+delta.z+delta.w,reaction);
+            return absorbed;
+        }
+        void ReportImpact(float amount,int reaction)
+        {
+            if(reaction<=0 || amount<=0)return;
+            var sync=GetComponent<NetworkEnemySync>();
+            if(sync && sync.IsNetworked)sync.BroadcastReactionDamage(amount,reaction);
+            else ReactionFeedback.Damage(transform.position,amount,reaction);
         }
         void Die(bool drops)
         {
             if (died) return;
             died = true;
-            EffectsService.Instance?.Burst(transform.position, IsBoss ? new Color(1, .35f, .6f) : new Color(.6f, .4f, 1));
+            if(drops)GetComponent<ReactionDamage>()?.ReleaseSeedOnDeath();
+            if(IsBoss)EffectsService.Instance?.Burst(transform.position,new Color(1,.35f,.6f));
+            else EffectsService.Instance?.Defeat(transform.position);
             if (IsBoss)
             {
                 GetComponent<NetworkEnemySync>()?.AnnounceDefeat();
@@ -94,7 +117,7 @@ namespace RogueSurvivors
                     if(meleeFinisher && meleeFinisher.IsLocal && meleeFinisher.Alive) {
                         var rewards=meleeFinisher.GetComponent<MeleeRewards>(); if(!rewards) rewards=meleeFinisher.gameObject.AddComponent<MeleeRewards>();
                         orb.value=rewards.Reward(experienceValue); orb.Attract(meleeFinisher);
-                    }
+                    } else if(reactionFinisher && reactionFinisher.IsLocal && reactionFinisher.Alive && Vector2.Distance(reactionFinisher.transform.position,transform.position)<=9)orb.Attract(reactionFinisher);
                 }
                 if (itemPrefab && Random.value < .055f)
                 {

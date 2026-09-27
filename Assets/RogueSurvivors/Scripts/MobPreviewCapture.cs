@@ -50,7 +50,7 @@ namespace RogueSurvivors
             camera.orthographicSize=7;
             for(int i=0;i<45;i++) {
                 float a=i*2.39996f,r=3+Mathf.Sqrt(i)*.65f;Vector2 point=new Vector2(Mathf.Cos(a),Mathf.Sin(a))*r;
-                Instantiate(Resources.Load<EnemyHealth>("RogueSurvivors/"+names[i%5]),point,Quaternion.identity).Scale(10);
+                var crowd=Instantiate(Resources.Load<EnemyHealth>("RogueSurvivors/"+names[i%5]),point,Quaternion.identity);crowd.Scale(10);crowd.itemPrefab=null;
             }
             var build=CharacterCatalog.CreateBuild("mage","ice");build.weapons.Add(new WeaponSaveData("wood",8));build.weapons.Add(new WeaponSaveData("water",8));build.weapons.Add(new WeaponSaveData("earth",8));player.GetComponent<PlayerStats>().Restore(build);player.GrantInvulnerability(300);player.GetComponent<LevelUpManager>().enabled=false;
             foreach(var weapon in player.GetComponents<WeaponBase>())weapon.enabled=true;

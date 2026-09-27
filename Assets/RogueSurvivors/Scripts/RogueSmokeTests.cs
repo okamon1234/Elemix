@@ -312,6 +312,7 @@ namespace RogueSurvivors
             foreach (var weapon in player.GetComponents<WeaponBase>()) weapon.enabled = false;
             var reactionPairs = new[] { new[] { CombatElement.Fire, CombatElement.Wind }, new[] { CombatElement.Fire, CombatElement.Lightning }, new[] { CombatElement.Fire, CombatElement.Ice }, new[] { CombatElement.Fire, CombatElement.Water }, new[] { CombatElement.Water, CombatElement.Lightning }, new[] { CombatElement.Water, CombatElement.Ice }, new[] { CombatElement.Light, CombatElement.Dark }, new[] { CombatElement.Wood, CombatElement.Water }, new[] { CombatElement.Wood, CombatElement.Fire }, new[] { CombatElement.Wood, CombatElement.Lightning }, new[] { CombatElement.Earth, CombatElement.Fire }, new[] { CombatElement.Earth, CombatElement.Water }, new[] { CombatElement.Earth, CombatElement.Ice }, new[] { CombatElement.Earth, CombatElement.Lightning }, new[] { CombatElement.Lightning, CombatElement.Ice }, new[] { CombatElement.Wind, CombatElement.Water }, new[] { CombatElement.Wind, CombatElement.Lightning }, new[] { CombatElement.Wind, CombatElement.Ice } };
             foreach (var pair in reactionPairs) Check(ElementReaction.Recipe(pair[0], pair[1]) > 0 && ElementReaction.Recipe(pair[0], pair[1]) == ElementReaction.Recipe(pair[1], pair[0]), "Reaction works in both orders: " + pair[0] + " + " + pair[1]);
+            yield return ReactionImpactTests.Run(Check,player);
             var statusVictim = Instantiate(prefab, player.transform.position + Vector3.right * 5, Quaternion.identity).GetComponent<EnemyHealth>();
             statusVictim.Scale(10000 / statusVictim.maximum); statusVictim.GetComponent<EnemyAI>().enabled = false;
             statusVictim.Damage(10, Vector2.zero, player, CombatElement.Water); statusVictim.Damage(10, Vector2.zero, player, CombatElement.Ice);
@@ -346,7 +347,7 @@ namespace RogueSurvivors
                 Check(seedState.BloomStage==(catalyst==CombatElement.Lightning?2:3),"Third element consumes seed exactly once: "+catalyst);
                 Check(!seedState.TryCatalyze(catalyst,10,player),"Pending seed cannot be triggered again: "+catalyst);
                 float hp=statusVictim.Current;yield return new WaitForSeconds(.4f);
-                Check(Mathf.Abs(hp-statusVictim.Current-(catalyst==CombatElement.Lightning?22:15.5f))<.1f,"Chain reaction has bounded damage: "+catalyst);
+                Check(Mathf.Abs(hp-statusVictim.Current-((ReactionBalance.Power(10,player)+10)*.5f*(catalyst==CombatElement.Lightning?4.5f:3.2f)))<.1f,"Chain reaction has bounded damage: "+catalyst);
                 Check(seedState.BloomStage==0,"Seed clears after chain impact: "+catalyst);
             }
             seedState.Begin(10,player,true);seedState.Begin(999,player,true);
@@ -357,14 +358,14 @@ namespace RogueSurvivors
             yield return new WaitForSeconds(.45f);
             statusVictim.Damage(10, Vector2.zero, player, CombatElement.Lightning); statusVictim.Damage(10, Vector2.zero, player, CombatElement.Ice);
             float beforePhysical = statusVictim.Current; statusVictim.Damage(20, Vector2.zero, player);
-            Check(Mathf.Approximately(beforePhysical - statusVictim.Current, 25), "Superconduct increases subsequent physical damage by 25 percent");
+            Check(Mathf.Abs(beforePhysical-statusVictim.Current-20*ReactionBalance.PhysicalPower*1.4f)<.02f, "Superconduct adds 40 percent to strengthened physical damage");
             yield return new WaitForSeconds(.45f);
             var spreadVictim = Instantiate(prefab, statusVictim.transform.position + Vector3.up, Quaternion.identity).GetComponent<EnemyHealth>(); spreadVictim.GetComponent<EnemyAI>().enabled = false;
             float spreadHp=spreadVictim.Current;
             statusVictim.Damage(1, Vector2.zero, player, CombatElement.Water); statusVictim.Damage(1, Vector2.zero, player, CombatElement.Wind);
             var support=statusVictim.GetComponent<ElementReaction>();
             Check(spreadVictim.Current==spreadHp && support.Cooldown==0,"Swirl spreads aura without extra damage or normal reaction cooldown");
-            Check(support.Resolve(10,CombatElement.Fire,player)==21,"Water wind fire immediately vaporizes without waiting for swirl");
+            Check(Mathf.Approximately(support.Resolve(10,CombatElement.Fire,player),ReactionBalance.Hit(10,4,player)),"Water wind fire immediately vaporizes without waiting for swirl");
             float normalWait=support.Cooldown;
             support.Resolve(1,CombatElement.Water,player);support.Resolve(1,CombatElement.Wind,player);
             Check(support.Cooldown==normalWait,"Wind does not extend an existing normal reaction cooldown");
@@ -440,7 +441,7 @@ namespace RogueSurvivors
                     opportunity.Restore(opportunityState);
                     player.transform.position=center+Vector2.right*3;
                     armoredHealth.Damage(10,Vector2.zero,player);
-                    Check(Mathf.Approximately(armoredHealth.Current,coreBefore-16),"Real combat path applies weak point damage while other armor remains");
+                    Check(Mathf.Approximately(armoredHealth.Current,coreBefore-16*ReactionBalance.PhysicalPower),"Real combat path applies weak point damage while other armor remains");
                     armoredHealth.SetSynchronizedHealth(coreBefore,armoredHealth.maximum);
                     opportunity.Restore(opportunityState);
                     float capped=opportunity.Resolve(armoredHealth.maximum,center+Vector2.right*3,true,false,out bypass);
@@ -457,21 +458,21 @@ namespace RogueSurvivors
             Check(armor.BreakOrder==(1|(2<<3)|(3<<6)|(4<<9)),"Armor records exact break order without losing earlier parts");
             Check(boss.Phase==2,"Breaking remaining parts retains phase two until half HP");
             armoredHealth.Damage(1, Vector2.zero, player);
-            Check(armoredHealth.Current == coreBefore - 1, "Exposed boss core takes damage");
+            Check(Mathf.Abs(armoredHealth.Current-coreBefore+ReactionBalance.PhysicalPower)<.02f, "Exposed boss core takes damage");
             player.transform.position = originalPosition;
             var reactionObject = new GameObject("Element verification");
             var reactions = reactionObject.AddComponent<ElementReaction>();
             Check(reactions.Resolve(10, CombatElement.Fire, player) == 10 && reactions.Resolve(10, CombatElement.Wind, player) == 10, "Fire plus wind swirls and retains fire");
             yield return new WaitForSeconds(.45f);
             reactions.Resolve(10, CombatElement.Fire, player);
-            Check(reactions.Resolve(10, CombatElement.Lightning, player) == 20, "Fire plus lightning triggers overload");
+            Check(Mathf.Approximately(reactions.Resolve(10, CombatElement.Lightning, player),ReactionBalance.Hit(10,2,player)), "Fire plus lightning triggers overload");
             yield return new WaitForSeconds(.45f);
             reactions.Resolve(10, CombatElement.Ice, player);
-            Check(reactions.Resolve(10, CombatElement.Fire, player) == 24, "Ice plus fire triggers melt in reverse order");
+            Check(Mathf.Approximately(reactions.Resolve(10, CombatElement.Fire, player),ReactionBalance.Hit(10,3,player)), "Ice plus fire triggers melt in reverse order");
             Destroy(reactionObject);
             var firstElements=new[]{CombatElement.Fire,CombatElement.Ice,CombatElement.Water,CombatElement.Lightning};
             var nextElements=new[]{CombatElement.Water,CombatElement.Fire,CombatElement.Ice,CombatElement.Fire};
-            var expectedDamage=new[]{21f,24f,10f,20f};
+            var expectedDamage=new[]{ReactionBalance.Hit(10,4,player),ReactionBalance.Hit(10,3,player),ReactionBalance.Hit(10,6,player),ReactionBalance.Hit(10,2,player)};
             for(int i=0;i<firstElements.Length;i++) {
                 var testObject=new GameObject("Support reaction regression");
                 var test=testObject.AddComponent<ElementReaction>();
@@ -495,7 +496,7 @@ namespace RogueSurvivors
             barrierReaction.Resolve(10,CombatElement.Earth,player);
             Check(player.HasBarrier && barrierReaction.Aura==CombatElement.Water && barrierReaction.Remaining==2 && barrierReaction.Cooldown==0,"Protected player earth hit preserves aura timer and reaction readiness");
             Check(FindObjectsByType<CrystalPickup>(FindObjectsSortMode.None).Length==crystalCount,"Protected player does not create another crystal");
-            Check(barrierReaction.Resolve(10,CombatElement.Fire,player)==21,"Suppressed crystallize allows immediate vaporize");
+            Check(Mathf.Approximately(barrierReaction.Resolve(10,CombatElement.Fire,player),ReactionBalance.Hit(10,4,player)),"Suppressed crystallize allows immediate vaporize");
             yield return new WaitForSeconds(.45f);
             barrierReaction.Restore((int)CombatElement.Earth,2);barrierReaction.Resolve(10,CombatElement.Water,player);
             Check(barrierReaction.Aura==CombatElement.Water && barrierReaction.Cooldown==0,"Protected player replaces stored earth with incoming reactive aura without crystallize");

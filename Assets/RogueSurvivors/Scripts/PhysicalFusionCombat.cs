@@ -9,7 +9,8 @@ namespace RogueSurvivors
         readonly Dictionary<string,float> next=new Dictionary<string,float>();
         void Awake() {stats=GetComponent<PlayerStats>();health=GetComponent<PlayerHealth>();}
         public static float Interval(int style,int level) => style==2?Mathf.Max(.65f,1.05f-level*.04f):style==5?2.2f:Mathf.Max(.9f,1.7f-level*.065f);
-        public static float Damage(int style,int level)
+        public static float Damage(int style,int level)=>BaseDamage(style,level)*1.3f;
+        public static float BaseDamage(int style,int level)
         {
             float value=style==2?17+level*3:style==9?24+level*4:style==0?65+level*10:style==3?85+level*12:style==5?45+level*8:42+level*7;
             return value*(style==0||style==2?1:1.15f)*(style==1||style==5?2.2f:style==8?1.3f:1);

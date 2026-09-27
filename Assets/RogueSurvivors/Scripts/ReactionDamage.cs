@@ -20,7 +20,7 @@ namespace RogueSurvivors
             if(bloom) {
                 if(BloomStage!=0)return;
                 BloomDamage=damage;BloomOwner=source;BloomRemaining=3;BloomStage=1;
-            } else { burnDamage=Mathf.Max(burnDamage,damage*.3f);burnSource=source;burnTicks=3;burnAt=Time.time+.6f; }
+            } else { if(burnTicks==0)burnAt=Time.time+.5f;burnDamage=Mathf.Max(burnDamage,damage*.65f);burnSource=source;burnTicks=6; }
         }
         public bool TryCatalyze(CombatElement element,float amount,PlayerHealth source)
         {
@@ -42,16 +42,24 @@ namespace RogueSurvivors
             UpdateVisual();
             if(!authority)return;
             if(GameManager.Instance && !GameManager.Instance.IsPlaying)return;
-            if(burnTicks>0 && Time.time>=burnAt) {burnTicks--;burnAt=Time.time+.6f;health.ReceiveSecondary(burnDamage,burnSource);}
+            if(burnTicks>0 && Time.time>=burnAt) {burnTicks--;burnAt=Time.time+.5f;health.ReceiveSecondary(burnDamage,burnSource,9);PaintedImpact.Show(0,transform.position,1.15f,.22f);}
             if(BloomStage==0)return;
             BloomRemaining-=Time.deltaTime;
             if(BloomRemaining>0)return;
+            ReleaseSeed();
+        }
+        public void ReleaseSeedOnDeath()
+        {
+            var sync=GetComponent<NetworkEnemySync>();
+            if(sync && !sync.IsAuthority)return;
+            ReleaseSeed();
+        }
+        void ReleaseSeed()
+        {
+            if(BloomStage==0)return;
             float damage=BloomDamage;int stage=BloomStage;var owner=BloomOwner;
             BloomStage=0;BloomRemaining=0;BloomDamage=0;
-            if(stage==2) {health.ReceiveSecondary(damage*2.2f,owner);return;}
-            float radius=stage==3?3.6f:2.8f,multiplier=stage==3?1.55f:1;
-            foreach(var enemy in new List<EnemyHealth>(EnemyHealth.Active))
-                if(enemy && enemy.Alive && Vector2.Distance(transform.position,enemy.transform.position)<=radius)enemy.ReceiveSecondary(damage*multiplier,owner);
+            BloomBurst.Schedule(transform.position,GetComponent<EnemyHealth>(),damage,stage,owner);
         }
         void UpdateVisual()
         {

@@ -8,11 +8,13 @@ namespace RogueSurvivors
         public CombatElement Aura { get; private set; }
         public float Remaining { get; private set; }
         float cooldown, swirlCooldown;
+        public int LastReaction {get;private set;}
         public float Cooldown => cooldown;
         public void Restore(int aura, float remaining) { Aura = (CombatElement)aura; Remaining = remaining; }
         void Update() { Remaining = Mathf.Max(0, Remaining - Time.deltaTime); cooldown = Mathf.Max(0, cooldown - Time.deltaTime); swirlCooldown = Mathf.Max(0, swirlCooldown - Time.deltaTime); if (Remaining == 0) Aura = CombatElement.None; }
         public float Resolve(float amount, CombatElement incoming, PlayerHealth source, bool? sourceBarrier = null)
         {
+            LastReaction=0;
             if (incoming == CombatElement.None) return amount;
             bool protectedSource=sourceBarrier ?? (source && source.HasBarrier);
             // 風は付着を奪わず、通常反応の時計にも触れない。ダメージは風武器そのものだけ。
@@ -24,35 +26,36 @@ namespace RogueSurvivors
             if (periodicState && periodicState.TryCatalyze(incoming, amount, source)) return amount;
             CombatElement spread = Aura;
             int reaction = Recipe(Aura, incoming);
-            if(reaction==11 && protectedSource){Aura=incoming;Remaining=4;return amount;}
+            if(reaction==11 && protectedSource){Aura=incoming;Remaining=ReactionBalance.AuraSeconds;return amount;}
             if (reaction != 0 && cooldown <= 0)
             {
-                float multiplier = reaction == 12 ? 1.3f : reaction == 10 ? 2f : reaction == 8 || reaction == 9 || reaction == 11 ? 1f : reaction == 2 ? 2f : reaction == 6 ? 1f : reaction == 3 ? 2.4f : reaction == 4 ? 2.1f : reaction == 7 ? 2.8f : 1.6f;
-                Aura = CombatElement.None; Remaining = 0; cooldown = GetComponent<EnemyHealth>() && GetComponent<EnemyHealth>().IsBoss ? .75f : .4f;
+                LastReaction=reaction;
+                float power=ReactionBalance.Power(amount,source);
+                Aura = CombatElement.None; Remaining = 0; cooldown = GetComponent<EnemyHealth>() && GetComponent<EnemyHealth>().IsBoss ? .3f : .18f;
                 var sync = GetComponent<NetworkEnemySync>();
                 if (sync && sync.IsNetworked) sync.BroadcastReaction(reaction, (int)spread);
                 else Show(reaction, spread);
-                if (reaction == 5 || reaction == 7)
+                if (reaction == 2 || reaction == 5 || reaction == 7)
                     foreach (var enemy in new List<EnemyHealth>(EnemyHealth.Active))
                         if (enemy && enemy.gameObject != gameObject && enemy.Alive && Vector2.Distance(transform.position, enemy.transform.position) <= 3.5f)
                         {
-                            enemy.ReceiveSecondary(amount * .8f, source);
+                            enemy.ReceiveSecondary(power * (reaction==2?1.8f:reaction==7?1.65f:1.1f), source, reaction);
                         }
                 if (reaction == 12) { var ailment = GetComponent<EnemyAilment>(); if (!ailment) ailment = gameObject.AddComponent<EnemyAilment>(); ailment.Superconduct(); }
-                if (reaction == 6) { var ailment = GetComponent<EnemyAilment>(); if (!ailment) ailment = gameObject.AddComponent<EnemyAilment>(); ailment.Freeze(1.5f); }
+                if (reaction == 6) { var ailment = GetComponent<EnemyAilment>(); if (!ailment) ailment = gameObject.AddComponent<EnemyAilment>(); ailment.Freeze(2.4f); }
                 if (reaction == 8 || reaction == 9) {
                     var periodic = GetComponent<ReactionDamage>(); if (!periodic) periodic = gameObject.AddComponent<ReactionDamage>();
-                    periodic.Begin(amount, source, reaction == 8);
+                    periodic.Begin(power, source, reaction == 8);
                 }
                 if (reaction == 11 && source) {
                     if (sync && sync.IsNetworked) sync.GiveCrystal(source);
                     else CrystalPickup.Spawn((Vector2)transform.position + ((Vector2)source.transform.position-(Vector2)transform.position).normalized*1.9f, source);
                 }
-                return amount * multiplier;
+                return ReactionBalance.Hit(amount,reaction,source);
             }
-            if (reaction != 0 && cooldown > 0) { Remaining = 4; return amount; }
+            if (reaction != 0 && cooldown > 0) { Remaining = ReactionBalance.AuraSeconds; return amount; }
             Aura = incoming;
-            Remaining = 4;
+            Remaining = ReactionBalance.AuraSeconds;
             return amount;
         }
         void SpreadAura()
@@ -75,7 +78,7 @@ namespace RogueSurvivors
             if(Recipe(element,CombatElement.Wind)!=13)return false;
             // 他の付着を上書きして、成立待ちの反応を消さない。
             if(Remaining>0 && Aura!=CombatElement.None && Aura!=CombatElement.Wind && Aura!=element)return false;
-            Aura=element;Remaining=4;return true;
+            Aura=element;Remaining=ReactionBalance.AuraSeconds;return true;
         }
         public static int Recipe(CombatElement a, CombatElement b)
         {
@@ -111,11 +114,8 @@ namespace RogueSurvivors
         }
         public void Show(int reaction, CombatElement spread = CombatElement.Wind)
         {
-            string[] names = { "", "", "過負荷", "融解", "蒸発", "感電", "凍結", "対消滅", "開花", "燃焼", "激化", "結晶", "超電導", "拡散", "超開花", "烈開花" };
-            if (reaction < 2 || reaction >= names.Length) return;
-            Color color = reaction == 6 ? Color.cyan : reaction == 7 ? new Color(.8f, .5f, 1) : new Color(1, .65f, .2f);
-            EffectsService.Instance?.Popup(transform.position + Vector3.up, names[reaction], color);
-            EffectsService.Instance?.Burst(transform.position, color);
+            if(reaction<2 || reaction>16)return;
+            ReactionFeedback.Show(transform.position,reaction);
             CombatFx.Reaction(reaction, spread, transform.position);
             if(reaction==14) BloomFlight.Show(transform);
         }

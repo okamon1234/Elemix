@@ -23,13 +23,13 @@ namespace RogueSurvivors
         IEnumerator Start()
         {
             var args=Environment.GetCommandLineArgs();int filter=Array.IndexOf(args,"--rogue-balance-character");
-            string[] characters=filter>=0&&filter+1<args.Length?new[]{CharacterCatalog.Find(args[filter+1]).Id}:new[]{"ranger","warden","knight","lancer"};
+            string[] characters=filter>=0&&filter+1<args.Length?new[]{CharacterCatalog.Find(args[filter+1]).Id}:new[]{"ranger","mage","warden","knight","lancer"};
             foreach (int seed in new[] { 12345, 54321 }) foreach (string character in characters) {
                 Time.timeScale=1; UnityEngine.Random.InitState(seed); SceneManager.LoadScene("SoloScene");
                 yield return null; yield return null;
-                player=PlayerHealth.Local; stats=player.GetComponent<PlayerStats>(); stats.Restore(CharacterCatalog.CreateBuild(character));
+                player=PlayerHealth.Local; stats=player.GetComponent<PlayerStats>(); stats.Restore(CharacterCatalog.CreateBuild(character,character=="mage"?"water":null));
                 player.GetComponent<PlayerMovement>().enabled=false; body=player.GetComponent<Rigidbody2D>(); levels=player.GetComponent<LevelUpManager>();
-                physical=character!="ranger"; GameManager.Instance.soloDuration=1800;
+                physical=character!="ranger" && character!="mage"; GameManager.Instance.soloDuration=1800;
                 row=new Row { character=character, seed=seed }; player.Died+=CountDeath;
                 Time.maximumDeltaTime=.2f;
                 while (GameManager.Instance.Elapsed<120 && string.IsNullOrEmpty(report.error)) { Time.timeScale=GameManager.Instance.ChoosingUpgrade ? 0 : 6; yield return null; }
@@ -56,6 +56,7 @@ namespace RogueSurvivors
                     if(PhysicalEvolution.Active(w))score+=8;
                     else if(PhysicalEvolution.PartnerWeight(stats,w.Id)>1)score+=w.Level<4?14:2;
                 }
+                if(w && stats.CharacterId=="mage" && (w.Id=="water"||w.Id=="wood"||w.Id=="lightning"||w.Id=="fireball"))score+=w.Level==0?25:10;
                 if(score>best) { best=score; choice=i; }
             }
             levels.Choose(choice);

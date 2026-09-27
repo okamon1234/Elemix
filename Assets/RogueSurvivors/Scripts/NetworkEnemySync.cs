@@ -51,6 +51,12 @@ namespace RogueSurvivors
             if (IsNetworked && IsAuthority) RPC_Reaction(element, spread);
 #endif
         }
+        public void BroadcastReactionDamage(float damage,int reaction)
+        {
+#if ROGUE_FUSION
+            if(IsNetworked && IsAuthority)RPC_ReactionDamage(damage,reaction);
+#endif
+        }
         public void BroadcastVolley(float angle, int count, float speed, float damage)
         {
 #if ROGUE_FUSION
@@ -172,7 +178,7 @@ namespace RogueSurvivors
             if (Runner.GameMode == GameMode.Single ? !source.HasStateAuthority : source.StateAuthority != info.Source) return;
             var player = source.GetComponent<PlayerHealth>();
             if (!player || !player.Alive || Vector3.Distance(source.transform.position, transform.position) > 25) return;
-            float maximum = 240 * player.GetComponent<PlayerStats>().DamageMultiplier;
+            float maximum = 800 * player.GetComponent<PlayerStats>().DamageMultiplier;
             if (element < 0 || element > (int)CombatElement.Earth) return;
             health.ReceiveHit(Mathf.Clamp(amount, 0, maximum), Vector2.zero, player, (CombatElement)element, sourceBarrier);
             PartHealth = GetComponent<BossParts>().Health;
@@ -186,6 +192,8 @@ namespace RogueSurvivors
         {
             if (Runner.TryFindObject(playerId, out var obj)) { var player = obj.GetComponent<PlayerHealth>(); if (player) CrystalPickup.Spawn((Vector2)transform.position+((Vector2)player.transform.position-(Vector2)transform.position).normalized*1.9f,player); }
         }
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        void RPC_ReactionDamage(float damage,int reaction)=>ReactionFeedback.Damage(transform.position,damage,reaction);
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
         void RPC_Reaction(int element, int spread) => GetComponent<ElementReaction>().Show(element, (CombatElement)spread);
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

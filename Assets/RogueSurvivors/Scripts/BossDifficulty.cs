@@ -9,6 +9,7 @@ namespace RogueSurvivors
         public float AttackRate { get; private set; } = 1;
         public void Configure(PlayerStats[] players)
         {
+            // 装備評価は遭遇難度の基準。反応・物理の命中時ボーナスをHPへ再加算しない。
             int total = 0; float dps = 0, durability = 0;
             foreach (var player in players) {
                 total += player.Level; durability += player.MaxHealth;

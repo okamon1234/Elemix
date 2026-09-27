@@ -48,7 +48,8 @@ namespace RogueSurvivors
         }
         IEnumerator Start()
         {
-            foreach(int points in new[]{16,32,48})foreach(string build in new[]{"physical","reaction","lightdark","hyperbloom","burgeon"}) {
+            string[] builds=Array.IndexOf(Environment.GetCommandLineArgs(),"--rogue-boss-physical")>=0?new[]{"physical"}:new[]{"physical","reaction","lightdark","hyperbloom","burgeon"};
+            foreach(int points in new[]{16,32,48})foreach(string build in builds) {
                 yield return Load(build,points,0);player.GrantInvulnerability(60);body.position=new Vector2(2.8f,0);
                 enemy.SetSynchronizedHealth(1000000,1000000);parts.Restore(Vector4.one*1000000,1000000);
                 float start=Time.time;yield return new WaitForSeconds(8);
@@ -57,7 +58,7 @@ namespace RogueSurvivors
                 float before=enemy.Current;start=Time.time;yield return new WaitForSeconds(8);row.coreDps=(before-enemy.Current)/(Time.time-start);row.seconds=16;report.runs.Add(row);Write();
                 if(!string.IsNullOrEmpty(report.error)){Restore();UnityEditor.EditorApplication.isPlaying=false;yield break;}
             }
-            foreach(int kind in new[]{0,1,2,3})foreach(string build in new[]{"physical","reaction","lightdark","hyperbloom","burgeon"}) {
+            foreach(int kind in new[]{0,1,2,3})foreach(string build in builds) {
                 UnityEngine.Random.InitState(24680+kind);yield return Load(build,48,kind);boss.enabled=true;live=true;
                 var row=new Row{test="live",build=build,boss=((BossKind)kind).ToString(),points=48,slots=stats.WeaponCount,fusions=stats.FusionIds.Count,bossMaximum=enemy.maximum,armorTime=-1};
                 float start=Time.time,lastHP=player.Current,lastBudget=0;int lastPart=-1;
